@@ -128,7 +128,7 @@ for r in S:
         madd(d, "donation", r["usdaiAmount"] / 1e18)
         add(d, "donation", r["usdaiAmount"] / 1e18)
     elif ev in ("LoanEscrowTimelockWithdrawn", "LoanEscrowTimelockCancelled", "LoanEscrowTimelockInterestRepaid"):
-        madd(d, "escrow_interest", amt(r["interestAmount"]) if amt(r["interestAmount"]) > 1 else 0)
+        madd(d, "escrow_interest", r["interestAmount"] / 1e18)   # escrow is always USDai, 18 decimals
 
 # ---------------------------------------------------------------- loans
 loans = {}       # hash -> record
@@ -231,7 +231,7 @@ for h, x in list(loans.items()):
         base["status"] = x["status"] if x["status"] != "refinanced" else base["status"]
         base["router"] = "v1→v2" if base["router"] == "v1" else base["router"]
         for k in ("rate", "term_days"):
-            if x.get(k) and not base.get(k):
+            if x.get(k) and (not base.get(k) or (x.get("start") or "") > (base.get("start") or "")):
                 base[k] = x[k]
         if x.get("end"):
             base["end"] = x["end"]
@@ -252,7 +252,11 @@ for r in L1 + L2:
         madd(d, "loan_interest_sale" if sale else "loan_interest", amt(r["interest"]))
         madd(d, "loan_principal_sale" if sale else "loan_principal_back", pr)
         add(d, "loan_interest", amt(r["interest"]))
-REAL = lambda x: x["start"] and not x.get("refi_of") and (x["principal"] or 0) >= 1000   # drops two $5 / $1 test loans
+def _quick_redo(x):
+    if x["status"] != "repaid" or not x.get("end") or not x["start"]:
+        return False
+    return (dt.date.fromisoformat(x["end"]) - dt.date.fromisoformat(x["start"])).days <= 7
+REAL = lambda x: x["start"] and not x.get("refi_of") and (x["principal"] or 0) >= 1000 and not _quick_redo(x)   # drops two $5 / $1 test loans and a loan repaid in 3 days and re-made
 for x in loans.values():
     if REAL(x):
         madd(x["start"], "originated", x["principal"] or 0)
@@ -261,8 +265,8 @@ for x in loans.values():
 # escrow facilities (funded into escrow while hardware ships; rate per second on the event)
 escrows = []
 for r in S:
-    if r["event"] == "LoanEscrowTimelockDeposited" and amt(r["usdaiAmount"]) > 1e6:
-        escrows.append({"hash": r["loanTermsHash"], "d": day(r["ts"]), "usd": amt(r["usdaiAmount"]), "rate": rate_yr(r["interestRate"])})
+    if r["event"] == "LoanEscrowTimelockDeposited" and r["usdaiAmount"] / 1e18 > 1e6:
+        escrows.append({"hash": r["loanTermsHash"], "d": day(r["ts"]), "usd": r["usdaiAmount"] / 1e18, "rate": rate_yr(r["interestRate"])})
 esc_end = {}
 for r in S:
     if r["event"] in ("LoanEscrowTimelockWithdrawn", "LoanEscrowTimelockCancelled"):
@@ -276,13 +280,32 @@ for e in escrows:
         madd(e["d"], "escrow_funded", e["usd"])
 
 # named borrowers, matched to USD.AI announcements by size and date (shown as "matched", never as fact)
-NAMED = {"0x7330b176": ("Duos Edge AI", "$98.1M facility announced and funded June 2026; sold through GLX Oct 1, 2026 (usd.ai)"),
-         "0x45e3c30b": ("Hydra Host", "$54.4M for 1,040 B300 GPUs, announced Sep 2026 (usd.ai)")}
+# Borrowers matched to SEC filings, the Proof of Loans attestation and USD.AI posts (research notes, loan book
+# section, checked 2026-11-17). Key: (start date, principal rounded to $1). Value: name, GPUs and site, borrower rate.
+NAMED = {
+    ("2026-01-28", 2296940): (None, "8 B200 servers, Saint-Denis FR", 0.15),
+    ("2026-02-07", 77588): (None, "RTX PRO 6000, Montreal", 0.135),
+    ("2026-02-17", 4282444): ("QumulusAI", "9 B300 + 18 RTX PRO 6000, Philadelphia", 0.12),
+    ("2026-03-05", 9800000): (None, "10 H200 + 38 B200, Spring TX", 0.115),
+    ("2026-03-09", 77550): (None, "RTX PRO 6000, Montreal", 0.135),
+    ("2026-03-11", 525876): (None, "4 H200 servers, Montreal", 0.12),
+    ("2026-03-20", 196524): (None, "RTX PRO 6000, Spring TX", 0.15),
+    ("2026-04-06", 26821644): ("Crucible Capital", "576 B300, Newport WA", 0.10),
+    ("2026-04-17", 16395614): ("QumulusAI", "600 H200, North Kansas City", 0.12),
+    ("2026-04-29", 11295783): (None, "256 B200, Spring TX", 0.115),
+    ("2026-04-29", 34055508): ("NexGen Cloud", "768 B200, Falkenberg SE", 0.12),
+    ("2026-06-04", 87053370): ("Duos Edge AI", "2,304 B300, Columbus GA", 0.12),
+    ("2026-08-04", 7499999): ("Corvex", "32 B200, Mid-Atlantic", 0.10),
+    ("2026-08-07", 15331685): ("QumulusAI", "34 B300, Philadelphia", 0.15),
+    ("2026-08-21", 4565269): (None, "16 B200, TX", 0.135),
+    ("2026-10-16", 4565269): (None, "16 B200, TX", 0.135),
+    ("2026-09-03", 54404473): ("Hydra Host", "1,040 B300, Ohio", 0.10),
+    ("2026-09-14", 9561607): (None, "192 B300, NE", 0.15),
+}
 for x in loans.values():
-    nm = NAMED.get(x["hash"][:10])
+    nm = NAMED.get((x["start"], round(x["principal"] or 0))) if x["start"] else None
     if nm:
-        x["name"], x["name_src"] = nm
-        x["name_matched"] = True
+        x["name"], x["gpus"], x["borrower_rate"] = nm
 # live principal outstanding per loan and per borrower (vault's share; v2 known, v1 = principal less principal repaid)
 by_borrower = collections.defaultdict(lambda: {"live": 0.0, "lent": 0.0, "n": 0, "rates": []})
 for x in loans.values():
@@ -290,13 +313,12 @@ for x in loans.values():
         continue
     out_ = max(0.0, (x.get("vault_principal") or x["principal"] or 0) - x["principal_paid"]) if x["status"] in ("active", "breached") else 0.0
     x["outstanding"] = out_
-    b = by_borrower[x["borrower"].lower()]
+    b = by_borrower[x.get("name") or x["borrower"].lower()]
     b["live"] += out_; b["lent"] += x["principal"] or 0; b["n"] += 1
     if x.get("rate") and out_:
         b["rates"].append((x["rate"], out_))
     if x.get("name"):
-        b["name"] = x["name"] + ("" if b["n"] == 1 and x["borrower"] else "")
-        b["name_loan"] = x["start"]
+        b["name"] = x["name"]
 
 # ---------------------------------------------------------------- USDai supply
 usdai_delta = collections.defaultdict(float)
@@ -543,6 +565,7 @@ kpi = {
     "chip_ath_close_date": max(cg_price, key=cg_price.get) if cg_price else None,
     "tge_date": "2026-04-21",
     "deposit_price": rpcs.get("vault_deposit_price"), "redemption_price": rpcs.get("vault_redemption_price"),
+    "qumulus_share": None,
     "loans_big": len([x for x in loans.values() if REAL(x) and x["principal"] >= 1e5]),
     "loans_small": len([x for x in loans.values() if REAL(x) and x["principal"] < 1e5]),
     "live_principal": sum(b["live"] for b in by_borrower.values()),
@@ -566,9 +589,10 @@ kpi = {
 }
 # CHIP buyback arithmetic: what the 10% fee could buy against the next unlock
 UNLOCK_DATE = "2027-04-21"   # 12 months after CHIP went live (first trades Apr 21, 2026; "$CHIP Is Live", Apr 22); 33% of investors + contributors
-INV, CONTRIB = 0.296, 0.235  # Messari; contributors 23.1-23.5% across sources, the larger is used
-cliff = 0.33 * (INV + CONTRIB) * 10_000_000_000
-monthly_after = 0.67 * (INV + CONTRIB) * 10_000_000_000 / 24
+INV, CONTRIB, RESERVE = 0.296, 0.231, 0.198   # docs.usd.ai tokenomics images; the reserve unlocks on the same step
+LOCKED = INV + CONTRIB + RESERVE
+cliff = 0.33 * LOCKED * 10_000_000_000
+monthly_after = 0.67 * LOCKED * 10_000_000_000 / 24
 kpi.update({"unlock_date": UNLOCK_DATE, "unlock_cliff_chip": cliff, "unlock_monthly_chip": monthly_after,
             "unlock_cliff_usd": cliff * price_now if price_now else None,
             "unlock_monthly_usd": monthly_after * price_now if price_now else None,
@@ -598,12 +622,12 @@ for i in range(30):
 kpi["s2_airdrop"] = S2
 
 # borrowers, largest live principal first
-borrower_rows = sorted(({"addr": a_, "name": b_.get("name"), "name_loan": b_.get("name_loan"), "live": r2(b_["live"], 0), "lent": r2(b_["lent"], 0), "n": b_["n"],
+borrower_rows = sorted(({"addr": a_ if a_.startswith("0x") else "", "name": b_.get("name"), "live": r2(b_["live"], 0), "lent": r2(b_["lent"], 0), "n": b_["n"],
                          "rate": r2(sum(rt * o for rt, o in b_["rates"]) / sum(o for _, o in b_["rates"]), 4) if b_["rates"] else None}
                         for a_, b_ in by_borrower.items()), key=lambda r: (-r["live"], -r["lent"]))
 open_esc = sum(e["usd"] for e in escrows if e["status"] == "open")
 if open_esc:
-    borrower_rows.append({"addr": "", "name": "Escrow facility", "name_loan": None, "live": r2(open_esc, 0), "lent": r2(open_esc, 0), "n": 1, "rate": 0.065, "escrow": True})
+    borrower_rows.append({"addr": "", "name": "HIVE Digital (escrow)", "inferred": True, "live": r2(open_esc, 0), "lent": r2(open_esc, 0), "n": 1, "rate": 0.065, "escrow": True})
     borrower_rows.sort(key=lambda r: -r["live"])
 tot_live = sum(r["live"] for r in borrower_rows) or 1
 kpi["top3_committed_share"] = sum(r["live"] for r in borrower_rows[:3]) / tot_live
@@ -658,9 +682,10 @@ EVENTS = [
     ("2026-06-04", "$98.1M Duos Edge AI loan funded", "usd.ai; DefiLlama fee spike"),
     ("2026-07-02", "Open loans moved to Loan Router v2", "On-chain, LoanMigratedOut"),
     ("2026-09-23", "$122M escrow for the $128.9M facility", "On-chain; usd.ai Sep 23"),
-    ("2026-10-01", "GLX launches; Duos loan sold", "usd.ai Oct 1"),
+    ("2026-10-01", "GLX launches; Duos loan repaid", "usd.ai Oct 1; Axe Compute 8-K"),
     ("2026-10-19", "CHIP governance forum opens", "usd.ai Oct 19"),
-    ("2026-10-28", "$1M CHIP buyback; fee-to-buyback proposal", "usd.ai Oct 28, Nov 3"),
+    ("2026-10-26", "$1M CHIP buyback announced", "USD.AI on X, Oct 26; delivery on-chain to Safe 0xcd9C…97c8"),
+    ("2026-10-28", "Proposal: the 10% fee buys CHIP", "usd.ai, Oct 28 (blog only, not yet on the forum)"),
     ("2026-11-01", "First hurdle-rate top-up; $118M redeemed", "On-chain, Donated + RedemptionsServiced"),
 ]
 events = [{"d": d, "label": l, "src": s} for d, l, s in EVENTS]
