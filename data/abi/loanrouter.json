@@ -1,0 +1,2713 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "loanRouterV2_",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "AccessControlBadConfirmation",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "AccessControlUnauthorizedAccount",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "neededRole",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ]
+ },
+ {
+  "name": "AddressEmptyCode",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "target",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721EnumerableForbiddenBatchMint",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "ERC721IncorrectOwner",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InsufficientApproval",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InvalidApprover",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "approver",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InvalidOperator",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InvalidOwner",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InvalidReceiver",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "receiver",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721InvalidSender",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "sender",
+    "type": "address",
+    "internalType": "address"
+   }
+  ]
+ },
+ {
+  "name": "ERC721NonexistentToken",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "name": "ERC721OutOfBoundsIndex",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "index",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ]
+ },
+ {
+  "name": "EnforcedPause",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "ExpectedPause",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "FailedCall",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidAddress",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidAmount",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidCaller",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidDepositType",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidInitialization",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidLength",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidLoanState",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "InvalidLoanTerms",
+  "type": "error",
+  "inputs": [
+   {
+    "name": "reason",
+    "type": "string",
+    "internalType": "string"
+   }
+  ]
+ },
+ {
+  "name": "InvalidSignature",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "MigrationInProgress",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "NotInitializing",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "ReentrancyGuardReentrantCall",
+  "type": "error",
+  "inputs": []
+ },
+ {
+  "name": "Approval",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "ApprovalForAll",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "operator",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "bool",
+    "indexed": false,
+    "internalType": "bool"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "EIP712DomainChanged",
+  "type": "event",
+  "inputs": [],
+  "anonymous": false
+ },
+ {
+  "name": "FeeRecipientSet",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "recipient",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "HookFailed",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "reason",
+    "type": "string",
+    "indexed": false,
+    "internalType": "string"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "Initialized",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "version",
+    "type": "uint64",
+    "indexed": false,
+    "internalType": "uint64"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LenderLiquidationRepaid",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "lender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "trancheIndex",
+    "type": "uint8",
+    "indexed": true,
+    "internalType": "uint8"
+   },
+   {
+    "name": "principal",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "interest",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LenderPositionMinted",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "lender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "trancheIndex",
+    "type": "uint8",
+    "indexed": true,
+    "internalType": "uint8"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LenderPositionsBurned",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LenderRepaid",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "lender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "trancheIndex",
+    "type": "uint8",
+    "indexed": true,
+    "internalType": "uint8"
+   },
+   {
+    "name": "principal",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "interest",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "prepay",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LiquidationFeeRateSet",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "liquidationFeeRate",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LoanCollateralLiquidated",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "proceeds",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "liquidationFee",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "surplus",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LoanLiquidated",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LoanMigratedOut",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LoanOriginated",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "borrower",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "currencyToken",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "principal",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "originationFee",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "LoanRepaid",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "borrower",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "principal",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "interest",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "prepayment",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "exitFee",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "isRepaid",
+    "type": "bool",
+    "indexed": false,
+    "internalType": "bool"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "NonceIncreased",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "loanTermsHash",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "lender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "nonce",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "Paused",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "RoleAdminChanged",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "previousAdminRole",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "newAdminRole",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "RoleGranted",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "account",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "sender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "RoleRevoked",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "indexed": true,
+    "internalType": "bytes32"
+   },
+   {
+    "name": "account",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "sender",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "Transfer",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "indexed": true,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "TransferFailed",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "token",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "recipient",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "intendedRecipient",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "Unpaused",
+  "type": "event",
+  "inputs": [
+   {
+    "name": "account",
+    "type": "address",
+    "indexed": false,
+    "internalType": "address"
+   }
+  ],
+  "anonymous": false
+ },
+ {
+  "name": "DEFAULT_ADMIN_ROLE",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "IMPLEMENTATION_VERSION",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "approve",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "balanceOf",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "borrow",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   },
+   {
+    "name": "lenderDepositInfos",
+    "type": "tuple[]",
+    "components": [
+     {
+      "name": "depositType",
+      "type": "uint8",
+      "internalType": "enum ILoanRouter.DepositType"
+     },
+     {
+      "name": "data",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LenderDepositInfo[]"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "burnLenderPositions",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "depositTimelock",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "eip712Domain",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "fields",
+    "type": "bytes1",
+    "internalType": "bytes1"
+   },
+   {
+    "name": "name",
+    "type": "string",
+    "internalType": "string"
+   },
+   {
+    "name": "version",
+    "type": "string",
+    "internalType": "string"
+   },
+   {
+    "name": "chainId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "verifyingContract",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "salt",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "extensions",
+    "type": "uint256[]",
+    "internalType": "uint256[]"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "getApproved",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "getRoleAdmin",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "grantRole",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "hasRole",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "increaseNonce",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "initialize",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "admin",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "feeRecipient",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "liquidationFeeRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "isApprovedForAll",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "lendingPositionInfo",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "loanTermsHash_",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "trancheIndex",
+    "type": "uint8",
+    "internalType": "uint8"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "liquidate",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "loanState",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTermsHash_",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "status",
+    "type": "uint8",
+    "internalType": "enum ILoanRouter.LoanStatus"
+   },
+   {
+    "name": "maturity",
+    "type": "uint64",
+    "internalType": "uint64"
+   },
+   {
+    "name": "repaymentDeadline",
+    "type": "uint64",
+    "internalType": "uint64"
+   },
+   {
+    "name": "scaledBalance",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "loanState",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "status",
+    "type": "uint8",
+    "internalType": "enum ILoanRouter.LoanStatus"
+   },
+   {
+    "name": "maturity",
+    "type": "uint64",
+    "internalType": "uint64"
+   },
+   {
+    "name": "repaymentDeadline",
+    "type": "uint64",
+    "internalType": "uint64"
+   },
+   {
+    "name": "scaledBalance",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "loanTermsHash",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "loanTokenIds",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256[]",
+    "internalType": "uint256[]"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "migrateOut",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "multicall",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "data",
+    "type": "bytes[]",
+    "internalType": "bytes[]"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "results",
+    "type": "bytes[]",
+    "internalType": "bytes[]"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "name",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "onCollateralLiquidated",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "",
+    "type": "bytes",
+    "internalType": "bytes"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "ownerOf",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "pause",
+  "type": "function",
+  "inputs": [],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "paused",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "quote",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   },
+   {
+    "name": "timestamp",
+    "type": "uint64",
+    "internalType": "uint64"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "quote",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "renounceRole",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "callerConfirmation",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "repay",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "loanTerms",
+    "type": "tuple",
+    "components": [
+     {
+      "name": "expiration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "borrower",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "currencyToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralToken",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "collateralTokenId",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "duration",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "repaymentInterval",
+      "type": "uint64",
+      "internalType": "uint64"
+     },
+     {
+      "name": "interestRateModel",
+      "type": "address",
+      "internalType": "address"
+     },
+     {
+      "name": "gracePeriodRate",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "gracePeriodDuration",
+      "type": "uint256",
+      "internalType": "uint256"
+     },
+     {
+      "name": "feeSpec",
+      "type": "tuple",
+      "components": [
+       {
+        "name": "originationFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "exitFee",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.FeeSpec"
+     },
+     {
+      "name": "trancheSpecs",
+      "type": "tuple[]",
+      "components": [
+       {
+        "name": "lender",
+        "type": "address",
+        "internalType": "address"
+       },
+       {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+       },
+       {
+        "name": "rate",
+        "type": "uint256",
+        "internalType": "uint256"
+       }
+      ],
+      "internalType": "struct ILoanRouter.TrancheSpec[]"
+     },
+     {
+      "name": "collateralWrapperContext",
+      "type": "bytes",
+      "internalType": "bytes"
+     },
+     {
+      "name": "options",
+      "type": "bytes",
+      "internalType": "bytes"
+     }
+    ],
+    "internalType": "struct ILoanRouter.LoanTerms"
+   },
+   {
+    "name": "amount",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "revokeRole",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "role",
+    "type": "bytes32",
+    "internalType": "bytes32"
+   },
+   {
+    "name": "account",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "safeTransferFrom",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "safeTransferFrom",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "data",
+    "type": "bytes",
+    "internalType": "bytes"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "setApprovalForAll",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "operator",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "approved",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "setFeeRecipient",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "recipient",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "setLiquidationFeeRate",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "liquidationFeeRate",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "supportsInterface",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "interfaceId",
+    "type": "bytes4",
+    "internalType": "bytes4"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "bool",
+    "internalType": "bool"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "symbol",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "tokenByIndex",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "index",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "tokenOfOwnerByIndex",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "owner",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "index",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "tokenURI",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "string",
+    "internalType": "string"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "totalSupply",
+  "type": "function",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "name": "transferFrom",
+  "type": "function",
+  "inputs": [
+   {
+    "name": "from",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "to",
+    "type": "address",
+    "internalType": "address"
+   },
+   {
+    "name": "tokenId",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "name": "unpause",
+  "type": "function",
+  "inputs": [],
+  "outputs": [],
+  "stateMutability": "nonpayable"
+ }
+]

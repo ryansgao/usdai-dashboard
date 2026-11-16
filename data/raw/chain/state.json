@@ -1,0 +1,22 @@
+{
+ "susdai": {
+  "scanned_to": 524678049,
+  "last_log_ts": 1794806123,
+  "updated_utc": "2026-11-16T06:59Z"
+ },
+ "loans": {
+  "scanned_to": 524678092,
+  "last_log_ts": 1783375994,
+  "updated_utc": "2026-11-16T06:59Z"
+ },
+ "loans2": {
+  "scanned_to": 524679017,
+  "last_log_ts": 1794233761,
+  "updated_utc": "2026-11-16T07:04Z"
+ },
+ "usdai": {
+  "scanned_to": 524680888,
+  "last_log_ts": 1794803633,
+  "updated_utc": "2026-11-16T07:13Z"
+ }
+}

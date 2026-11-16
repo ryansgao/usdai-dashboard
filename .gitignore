@@ -1,0 +1,8 @@
+local.env
+.env
+node_modules/
+__pycache__/
+*.part
+data/raw/chain/*.jsonl.gz
+data/raw/chain/*.part
+local/
