@@ -3,7 +3,7 @@
 Scope: the CHIP token only. Protocol, loans and credit risk are covered elsewhere. Every fact carries a source and the
 date it was read; **[verified on-chain]** marks a contract read or log pull of my own; **[unverified]** marks an
 aggregator or a single secondary source. Prices are from the dashboard's CoinGecko pull (`data/raw/coingecko`, last
-point 2026-11-16 00:00 UTC, $0.0270; live $0.0275 on Blockscout 2026-11-17). Scratch data and scripts:
+point 2026-11-16 00:00 UTC, $0.0270; live $0.0275 on Blockscout 2026-11-17).
 
 ---
 
