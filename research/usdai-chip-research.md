@@ -1,5 +1,12 @@
 # USD.AI and CHIP: research notes
 
+> **First-pass notes (2026-11-16).** Superseded where they conflict by the primary-source studies in this folder:
+> `protocol-and-loans.md` (loan book with named borrowers, attestation, yield sources, liquidity, credit risk) and
+> `chip-token.md` (allocation from the docs' images, month-by-month unlocks, buyback on-chain trace, governance,
+> holders). Known corrections: CHIP launched Apr 21 (not Apr 30); the April 2027 unlock includes the reserve (~2.4B);
+> the $1M buyback was announced Oct 26; the Duos "GLX sale" was a payoff by the borrower's buyer; USDai was backed
+> by USDC and wrapped M before Feb 2026.
+
 Working notes behind the dashboard. Every fact carries the date it was checked and its source. Numbers from the
 protocol's own blog are marked *(self-reported)*; on-chain figures are reproduced by `pipeline/` and shown on the
 page. Checked 2026-11-16 unless marked.
