@@ -38,7 +38,8 @@
     int: (v) => (v == null ? "–" : (v < 0 ? MINUS : "") + d3.format(",.0f")(Math.abs(v))),
     pct: (v) => (v == null ? "–" : (v < 0 ? MINUS : "") + Math.abs(v * 100).toFixed(1) + "%"),
     pct0: (v) => (v == null ? "–" : (v < 0 ? MINUS : "") + Math.abs(v * 100).toFixed(0) + "%"),
-    vvv: (v) => compact(v) + " VVV",
+    usdAx: (v) => (v == null ? "–" : (v < 0 ? MINUS + "$" : "$") + compact(Math.abs(v), 1)),   // axis ticks: no trailing .0
+    chip: (v) => (v == null ? "–" : "$" + (Math.abs(v) < 0.1 ? v.toFixed(4) : v.toFixed(3))),
     x: (v) => (v == null ? "–" : v.toFixed(1) + "×"),
     signed,
   };
@@ -415,7 +416,7 @@
       m.append("circle").attr("class", "pt").attr("cx", p.px).attr("cy", p.py).attr("r", 3);
       m.append("circle").attr("class", "disc").attr("cx", p.x).attr("cy", p.y).attr("r", R);
       m.append("text").attr("x", p.x).attr("y", p.y + 3.9).attr("text-anchor", "middle").text(p.n);
-      m.append("circle").attr("class", "hit").attr("cx", p.x).attr("cy", p.y).attr("r", 13);
+      m.append("circle").attr("class", "hit").attr("cx", p.x).attr("cy", p.y).attr("r", 9);
       let li = null;
       if (ol) {
         li = document.createElement("li");

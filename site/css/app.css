@@ -701,3 +701,37 @@ table.scen tbody tr:hover td.now-col { background: color-mix(in srgb, var(--c-le
   .h-cells { order: 4; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; }
   .h-cell.xl { display: flex; }
 }
+
+/* ---------- USD.AI page additions ---------- */
+.howto { margin: 0 0 24px; }
+.howto ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 28px; counter-reset: hs; }
+.howto li { counter-increment: hs; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--fg-2); padding-top: 10px; border-top: 2px solid var(--line); }
+.howto li b { font-size: 14px; color: var(--fg); }
+.howto li b::before { content: counter(hs) "  "; color: var(--muted); font-weight: 500; }
+@media (max-width: 900px) { .howto ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; } }
+.flow-list { margin: 8px 0; padding-left: 22px; display: grid; gap: 8px; font-size: 14px; color: var(--fg-2); }
+.flow-list b { color: var(--fg); }
+.sig .why { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.sig .sp { width: 160px; height: 28px; }
+.sig tr.rowlink { cursor: pointer; }
+.sig tr.rowlink:hover td { background: var(--hover); }
+.nowrap, td.nowrap { white-space: nowrap; }
+table.t tr.tot td { border-top: 1px solid var(--line-strong); }
+table.t.grid4 td.now { background: var(--primary-subtle); font-weight: 600; }
+.st { font-size: 13px; font-weight: 500; white-space: nowrap; }
+.st-up { color: var(--gain); } .st-down { color: var(--loss); }
+.mdoc { max-width: 920px; }
+.defs { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 10px 24px; margin: 8px 0; font-size: 14px; }
+.defs dt { font-weight: 600; } .defs dd { margin: 0; color: var(--fg-2); max-width: 68ch; }
+@media (max-width: 640px) { .defs { grid-template-columns: 1fr; gap: 2px; } .defs dd { margin-bottom: 10px; } }
+.sqlq { border-top: 1px solid var(--line-2); padding: 8px 0; }
+.sqlq summary { cursor: pointer; font-size: 14px; }
+.sqlwrap { position: relative; } .sqlwrap .copy { position: absolute; right: 6px; top: 6px; }
+.sqlq pre { overflow: auto; font: 12px/1.5 var(--code); background: var(--hover); padding: 12px; border-radius: 4px; max-height: 360px; }
+.sb-wrap { padding: 8px 0 4px; } .sb-wrap .lg-t { display: flex; gap: 40px; flex-wrap: wrap; }
+.card-note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.presets button { min-height: 36px; }
+[data-theme="dark"] table.t tr.hl td { background: color-mix(in srgb, var(--c-lead) 14%, var(--card)); }
+table.peers td:first-child { min-width: 220px; }
+@media (max-width: 900px) { table.peers .sub-n { display: none; } }
+table.t th .sub-n { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }

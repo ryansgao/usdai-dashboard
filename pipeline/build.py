@@ -107,10 +107,12 @@ for r in S:
     elif ev == "RedeemRequest":
         req_by_id[r["requestId"]] = r
         add(d, "redeem_req_shares", r["shares"] / 1e18)
+        add(d, "q_in", r["shares"] / 1e18)
         madd(d, "redeem_req_shares", r["shares"] / 1e18)
     elif ev == "RedemptionProcessed":
         a = r["amount"] / 1e18
         red_by_owner[r["controller"]] += a
+        add(d, "q_out", r["fulfilledShares"] / 1e18)
         redeemers_by_payout[d][r["controller"]] += a
         q = req_by_id.get(r["redemptionId"])
         if q and a > 0:
@@ -124,10 +126,9 @@ for r in S:
         madd(d, "base_yield", a); madd(d, "fee_base", f)
     elif ev == "Donated":
         madd(d, "donation", r["usdaiAmount"] / 1e18)
+        add(d, "donation", r["usdaiAmount"] / 1e18)
     elif ev in ("LoanEscrowTimelockWithdrawn", "LoanEscrowTimelockCancelled", "LoanEscrowTimelockInterestRepaid"):
         madd(d, "escrow_interest", amt(r["interestAmount"]) if amt(r["interestAmount"]) > 1 else 0)
-    elif ev == "LoanEscrowTimelockDeposited":
-        madd(d, "escrow_funded", amt(r["usdaiAmount"]))
 
 # ---------------------------------------------------------------- loans
 loans = {}       # hash -> record
@@ -232,11 +233,17 @@ for h, x in list(loans.items()):
             base["status"] = "active"
 
 # vault-side cash flows from both routers (the vault is the lender of record for sUSDai)
+tx_principal = collections.defaultdict(float)
+for r in L1 + L2:
+    if r["event"] in ("LenderRepaid", "LenderLiquidationRepaid") and r["lender"].lower() == VAULT:
+        tx_principal[(r["loanTermsHash"], day(r["ts"]))] += amt(r["principal"]) + amt(r.get("prepay", 0))
 for r in L1 + L2:
     if r["event"] in ("LenderRepaid", "LenderLiquidationRepaid") and r["lender"].lower() == VAULT:
         d = day(r["ts"])
-        madd(d, "loan_interest", amt(r["interest"]))
-        madd(d, "loan_principal_back", amt(r["principal"]) + amt(r.get("prepay", 0)))
+        pr = amt(r["principal"]) + amt(r.get("prepay", 0))
+        sale = tx_principal[(r["loanTermsHash"], day(r["ts"]))] > 50e6   # a large loan paid off in one day: the GLX sale of Oct 1, 2026
+        madd(d, "loan_interest_sale" if sale else "loan_interest", amt(r["interest"]))
+        madd(d, "loan_principal_sale" if sale else "loan_principal_back", pr)
         add(d, "loan_interest", amt(r["interest"]))
 REAL = lambda x: x["start"] and not x.get("refi_of") and (x["principal"] or 0) >= 1000   # drops two $5 / $1 test loans
 for x in loans.values():
@@ -255,6 +262,34 @@ for r in S:
         esc_end[r["loanTermsHash"]] = (r["event"].replace("LoanEscrowTimelock", "").lower(), day(r["ts"]))
 for e in escrows:
     e["status"], e["end"] = esc_end.get(e["hash"], ("open", None))
+for e in escrows:
+    # a deposit cancelled and re-made within days for the same amount is one facility, not two
+    e["redo"] = e["status"] == "cancelled" and any(o is not e and abs(o["usd"] - e["usd"]) < 1 and o["d"] >= e["d"] and o["status"] != "cancelled" for o in escrows)
+    if e["status"] != "cancelled":
+        madd(e["d"], "escrow_funded", e["usd"])
+
+# named borrowers, matched to USD.AI announcements by size and date (shown as "matched", never as fact)
+NAMED = {"0x7330b176": ("Duos Edge AI", "$98.1M facility announced and funded June 2026; sold through GLX Oct 1, 2026 (usd.ai)"),
+         "0x45e3c30b": ("Hydra Host", "$54.4M for 1,040 B300 GPUs, announced Sep 2026 (usd.ai)")}
+for x in loans.values():
+    nm = NAMED.get(x["hash"][:10])
+    if nm:
+        x["name"], x["name_src"] = nm
+        x["name_matched"] = True
+# live principal outstanding per loan and per borrower (vault's share; v2 known, v1 = principal less principal repaid)
+by_borrower = collections.defaultdict(lambda: {"live": 0.0, "lent": 0.0, "n": 0, "rates": []})
+for x in loans.values():
+    if not REAL(x) or x.get("merged_into"):
+        continue
+    out_ = max(0.0, (x.get("vault_principal") or x["principal"] or 0) - x["principal_paid"]) if x["status"] in ("active", "breached") else 0.0
+    x["outstanding"] = out_
+    b = by_borrower[x["borrower"].lower()]
+    b["live"] += out_; b["lent"] += x["principal"] or 0; b["n"] += 1
+    if x.get("rate") and out_:
+        b["rates"].append((x["rate"], out_))
+    if x.get("name"):
+        b["name"] = x["name"] + ("" if b["n"] == 1 and x["borrower"] else "")
+        b["name_loan"] = x["start"]
 
 # ---------------------------------------------------------------- USDai supply
 usdai_delta = collections.defaultdict(float)
@@ -312,7 +347,7 @@ first = min([d for d in price_by_day] + [d for d in tvl if tvl[d] > 0])
 d0 = dt.date.fromisoformat(first)
 rows = []
 price = None
-sup = usdai = schip = 0.0
+sup = usdai = schip = qsh = don_ps = 0.0
 cur = d0
 while cur.isoformat() <= AS_OF:
     d = cur.isoformat()
@@ -321,6 +356,9 @@ while cur.isoformat() <= AS_OF:
     usdai += usdai_delta.get(d, 0.0)
     schip += schip_delta.get(d, 0.0)
     x = daily.get(d, {})
+    qsh += x.get("q_in", 0.0) - x.get("q_out", 0.0)
+    if x.get("donation") and sup:
+        don_ps += x["donation"] / sup          # the top-up's step in the share price
     row = {"d": d, "share_price": r2(price, 6), "susdai_supply": r2(sup, 0),
            "susdai_assets": r2(sup * price, 0) if price else None,
            "usdai_supply": r2(usdai, 0) if U else None,
@@ -333,7 +371,9 @@ while cur.isoformat() <= AS_OF:
            "pt_apy": r2(pt[d]["apy"] / 100, 5) if d in pt and pt[d].get("apy") is not None else None,
            "chip_price": r2(cg_price.get(d), 6), "btc_price": r2(btc.get(d), 0), "chip_mcap": r2(cg_mcap.get(d), 0), "chip_vol": r2(cg_vol.get(d), 0),
            "chip_holders": chip_holders_by_day.get(d), "chip_transfers": chip_xfer_by_day.get(d) if CH else None,
-           "schip_staked": r2(schip, 0) if SC else None}
+           "schip_staked": r2(schip, 0) if SC else None,
+           "queue_usd": r2(max(0.0, qsh) * (price or 1), 0), "price_ex_topup": r2(price - don_ps, 6) if price else None,
+           "hurdle": 0.07 if d >= "2026-10-15" else None}
     rows.append(row)
     cur += dt.timedelta(days=1)
 # fill forward holder counts across days without transfers
@@ -348,18 +388,32 @@ for r in rows:
     p = r["share_price"]
     back = (dt.date.fromisoformat(r["d"]) - dt.timedelta(days=30)).isoformat()
     p0 = byd.get(back, {}).get("share_price")
-    r["apy_30d"] = r2((p / p0 - 1) * 365 / 30, 5) if p and p0 else None
+    young = r["d"] < (d0 + dt.timedelta(days=60)).isoformat()   # launch weeks: tiny base, the rate means nothing
+    r["apy_30d"] = r2((p / p0 - 1) * 365 / 30, 5) if p and p0 and not young else None
+    q, q0 = r["price_ex_topup"], byd.get(back, {}).get("price_ex_topup")
+    r["apy_30d_ex"] = r2((q / q0 - 1) * 365 / 30, 5) if q and q0 and not young else None
+    r["unlent"] = r2(max(0.0, r["susdai_assets"] - r["lent"]), 0) if r["susdai_assets"] and r["lent"] is not None else None
     r["total_assets"] = r2((r["idle"] or 0) + (r["lent"] or 0), 0) if r["idle"] is not None else None
-    r["lent_share"] = r2(r["lent"] / r["total_assets"], 4) if r["lent"] and r["total_assets"] else None
+    r["lent_share"] = r2(r["lent"] / r["susdai_assets"], 4) if r["lent"] and r["susdai_assets"] else None
+    r["fdv"] = r2(r["chip_price"] * 1e10, 0) if r["chip_price"] else None
+    r["fdv_per_dollar"] = r2(r["fdv"] / r["susdai_assets"], 4) if r["fdv"] and r["susdai_assets"] else None
+# market cap in years of fee: trailing-30-day DefiLlama revenue, origination-fee days removed (revenue == fees)
+orig_days = {d for d in rev if rev[d] and fees.get(d) and rev[d] >= 0.99 * fees[d] and rev[d] > 50_000}
+for i, r in enumerate(rows):
+    win = rows[max(0, i - 29): i + 1]
+    f30 = sum((w["revenue"] or 0) for w in win if w["d"] not in orig_days)
+    r["fee_30d"] = r2(f30, 0) if len(win) == 30 else None
+    r["mcap_years_fee"] = r2(r["chip_mcap"] / (f30 * 12), 2) if r["chip_mcap"] and f30 > 0 and len(win) == 30 else None
 
 # ---------------------------------------------------------------- monthly table
 mon = []
 for m in sorted(monthly):
     x = monthly[m]
-    income = x["loan_interest"] + x["base_yield"] + x["escrow_interest"]
+    income = x["loan_interest"] + x["loan_interest_sale"] + x["base_yield"] + x["escrow_interest"]
     mrow = {"m": m, **{k: r2(v, 0) for k, v in x.items()},
             "income_net": r2(income, 0),
-            "fee_modeled": r2(income / 0.9 * 0.1, 0),          # 10% of gross yield, gross = net / 0.9
+            "fee_modeled": r2(x["fee_base"] + (x["loan_interest"] + x["loan_interest_sale"] + x["escrow_interest"]) / 9, 0),  # admin fee on base yield (on-chain) + 10% of gross loan/escrow interest
+            "orig_fees": r2(sum(rev[d] for d in orig_days if d.startswith(m)), 0),
             "depositors": len(depositors.get(m, ())),
             "loan_share": r2(x["loan_interest"] / income, 4) if income else None}
     mon.append(mrow)
@@ -439,7 +493,7 @@ circ = md.get("circulating_supply"); total = md.get("total_supply"); maxs = md.g
 last_full = [m for m in mon if m["days"] >= 28 and m["m"] < AS_OF[:7]]
 lm = last_full[-1] if last_full else None
 # the buyback budget: the 10% fee, measured by DefiLlama as revenue, last 30 days
-nim_month = (J("defillama/revenue.json") or {}).get("total30d")
+nim_month = lastv("fee_30d")[0]           # DefiLlama revenue, last 30 days, origination-fee days removed
 yr_income = sum(m["income_net"] for m in mon if m["m"] > (dt.date.fromisoformat(AS_OF) - dt.timedelta(days=365)).isoformat()[:7] and m["m"] < AS_OF[:7])
 kpi = {
     "as_of": AS_OF,
@@ -468,7 +522,21 @@ kpi = {
     "income_last_month": lm["income_net"] if lm else None, "loan_interest_last_month": lm.get("loan_interest") if lm else None,
     "base_yield_last_month": lm.get("base_yield") if lm else None,
     "fee_last_month": nim_month, "income_12m": yr_income,
-    "fee_12m": sum(v for t, v in (J("defillama/revenue.json") or {}).get("totalDataChart", [])[-365:]),
+    "fee_12m": sum(m["fee_modeled"] or 0 for m in mon if m["m"] > (dt.date.fromisoformat(AS_OF) - dt.timedelta(days=365)).isoformat()[:7] and m["m"] < AS_OF[:7]),
+    "orig_fees_12m": sum(rev[d] for d in orig_days if d > (dt.date.fromisoformat(AS_OF) - dt.timedelta(days=365)).isoformat()),
+    "apy_30d_ex": lastv("apy_30d_ex")[0], "assets_change_30d": (lastv("susdai_assets")[0] / ago("susdai_assets", 30) - 1) if ago("susdai_assets", 30) else None,
+    "lent_change_30d": (lastv("lent")[0] / ago("lent", 30) - 1) if ago("lent", 30) else None,
+    "chip_ath_close": max(cg_price.values()) if cg_price else None,
+    "chip_ath_close_date": max(cg_price, key=cg_price.get) if cg_price else None,
+    "tge_date": "2026-04-21",
+    "deposit_price": rpcs.get("vault_deposit_price"), "redemption_price": rpcs.get("vault_redemption_price"),
+    "loans_big": len([x for x in loans.values() if REAL(x) and x["principal"] >= 1e5]),
+    "loans_small": len([x for x in loans.values() if REAL(x) and x["principal"] < 1e5]),
+    "live_principal": sum(b["live"] for b in by_borrower.values()),
+    "live_rated_principal": sum(o for b in by_borrower.values() for _, o in b["rates"]),
+    "live_rate_wavg": (sum(rt * o for b in by_borrower.values() for rt, o in b["rates"]) / sum(o for b in by_borrower.values() for _, o in b["rates"])) if any(b["rates"] for b in by_borrower.values()) else None,
+    "loan_interest_total": sum((m.get("loan_interest") or 0) + (m.get("loan_interest_sale") or 0) for m in mon),
+    "sale_principal": sum(m.get("loan_principal_sale") or 0 for m in mon),
     "fees_12m": sum(v for t, v in (J("defillama/fees.json") or {}).get("totalDataChart", [])[-365:]),
     "llama_fees_30d": (J("defillama/fees.json") or {}).get("total30d"), "llama_rev_30d": (J("defillama/revenue.json") or {}).get("total30d"),
     "llama_rev_all": (J("defillama/revenue.json") or {}).get("totalAllTime"),
@@ -484,7 +552,7 @@ kpi = {
     "btc_change_30d": (btc[AS_OF] / btc[(dt.date.fromisoformat(AS_OF) - dt.timedelta(days=30)).isoformat()] - 1) if btc.get(AS_OF) and btc.get((dt.date.fromisoformat(AS_OF) - dt.timedelta(days=30)).isoformat()) else None,
 }
 # CHIP buyback arithmetic: what the 10% fee could buy against the next unlock
-UNLOCK_DATE = "2027-04-30"   # 12 months after TGE (2026-04-30, Blockmedia); 33% of investors + contributors
+UNLOCK_DATE = "2027-04-21"   # 12 months after CHIP went live (first trades Apr 21, 2026; "$CHIP Is Live", Apr 22); 33% of investors + contributors
 INV, CONTRIB = 0.296, 0.235  # Messari; contributors 23.1-23.5% across sources, the larger is used
 cliff = 0.33 * (INV + CONTRIB) * 10_000_000_000
 monthly_after = 0.67 * (INV + CONTRIB) * 10_000_000_000 / 24
@@ -496,22 +564,42 @@ kpi.update({"unlock_date": UNLOCK_DATE, "unlock_cliff_chip": cliff, "unlock_mont
             "buyback_yield_on_mcap": (nim_month * 12 / kpi["chip_mcap"]) if nim_month and kpi["chip_mcap"] else None,
             "buyback_1m_chip": 22_343_372, "buyback_1m_usd": 1_000_000, "buyback_1m_price": 0.044756})
 
-# unlock schedule (modelled): months from Nov 2026 to Apr 2029
+# unlock schedule (modelled): months from Nov 2026 to Apr 2029; reserve and ecosystem have no published schedule
+S2 = 225_000_000          # Season 2 airdrop, claimable with no lock-up until Jan 31, 2027 (October recap)
 sched = []
-base = circ or 2_000_000_000
-eco_s2 = 225_000_000  # Season 2 airdrop, claimable now (counted once, Nov 2026)
-cum = base
+cum_chip = cum_fee = 0.0
 m0 = dt.date(2026, 11, 1)
-for i in range(31):
+after = 0
+for i in range(30):
     y, mth = divmod(m0.month - 1 + i, 12)
-    md_ = dt.date(m0.year + y, mth + 1, 1)
-    add_ = 0.0
-    if md_.isoformat()[:7] == "2027-04":
-        add_ += cliff
-    elif md_.isoformat()[:7] > "2027-04" and len([s for s in sched if s["m"] > "2027-04"]) < 24:
-        add_ += monthly_after
-    cum += add_
-    sched.append({"m": md_.isoformat()[:7], "unlock": r2(add_, 0), "supply": r2(cum, 0)})
+    mk_ = dt.date(m0.year + y, mth + 1, 1).isoformat()[:7]
+    s2 = S2 if mk_ == "2026-11" else 0.0
+    inv = cliff if mk_ == "2027-04" else (monthly_after if mk_ > "2027-04" and after < 24 else 0.0)
+    if mk_ > "2027-04" and inv:
+        after += 1
+    cum_chip += s2 + inv
+    cum_fee += nim_month or 0
+    sched.append({"m": mk_, "s2": r2(s2, 0), "unlock": r2(inv, 0), "cum_chip": r2(cum_chip, 0),
+                  "cum_usd": r2(cum_chip * price_now, 0) if price_now else None, "cum_fee": r2(cum_fee, 0),
+                  "fee_chip": r2(cum_fee / price_now, 0) if price_now else None})
+kpi["s2_airdrop"] = S2
+
+# borrowers, largest live principal first
+borrower_rows = sorted(({"addr": a_, "name": b_.get("name"), "name_loan": b_.get("name_loan"), "live": r2(b_["live"], 0), "lent": r2(b_["lent"], 0), "n": b_["n"],
+                         "rate": r2(sum(rt * o for rt, o in b_["rates"]) / sum(o for _, o in b_["rates"]), 4) if b_["rates"] else None}
+                        for a_, b_ in by_borrower.items()), key=lambda r: (-r["live"], -r["lent"]))
+tot_live = sum(r["live"] for r in borrower_rows) or 1
+kpi["top1_live_share"] = borrower_rows[0]["live"] / tot_live if borrower_rows else None
+kpi["top2_live_share"] = sum(r["live"] for r in borrower_rows[:2]) / tot_live if borrower_rows else None
+kpi["top1_lent_share"] = max(r["lent"] for r in borrower_rows) / (kpi["originated_usd"] or 1) if borrower_rows else None
+
+# what USD.AI says vs what the chain shows (research notes, section 4)
+REPORTED = [
+    {"d": "2026-06-08", "what": "TVL $398M, $202M deployed, 13 active loans", "src": "Lighthouse YTD report"},
+    {"d": "2026-10-02", "what": "TVL $659M+, $420M+ lifetime deployed, net APY 6.9%", "src": "September recap"},
+    {"d": "2026-11-03", "what": "TVL $474M, $531M lifetime across 20 financings, net APY 7.00%", "src": "October recap"},
+    {"d": "2026-11-04", "what": "sUSDai TVL $468M, $306.3M lent across 18 loans", "src": "thelearningpill"},
+]
 
 # ---------------------------------------------------------------- peers
 mk = {c["id"]: c for c in (J("peers/coingecko-markets.json") or [])}
@@ -546,7 +634,7 @@ EVENTS = [
     ("2025-09-26", "Deposit cap raised to $500M", "DefiLlama hallmark"),
     ("2026-01-27", "Foundation and CHIP announced", "usd.ai blog"),
     ("2026-03-07", "$136M redeemed in one payout", "On-chain, RedemptionsServiced"),
-    ("2026-04-30", "CHIP token generation event", "Blockmedia"),
+    ("2026-04-21", "CHIP starts trading", "CoinGecko first price; usd.ai \"$CHIP Is Live\", Apr 22"),
     ("2026-06-04", "$98.1M Duos Edge AI loan funded", "usd.ai; DefiLlama fee spike"),
     ("2026-07-02", "Open loans moved to Loan Router v2", "On-chain, LoanMigratedOut"),
     ("2026-09-23", "$122M escrow for the $128.9M facility", "On-chain; usd.ai Sep 23"),
@@ -564,10 +652,20 @@ meta = {
     "first_day": rows[0]["d"],
 }
 out = {"meta": meta, "kpi": kpi, "daily": rows, "monthly": mon, "loans": loan_list, "escrows": escrows,
+       "borrowers": borrower_rows, "reported": REPORTED,
        "payouts": merged, "events": events, "peers": peers, "unlocks": sched}
 os.makedirs(os.path.join(SITE, "data"), exist_ok=True)
 with open(os.path.join(SITE, "data", "data.js"), "w") as f:
     f.write("window.USDAI=" + json.dumps(out, separators=(",", ":"), default=str) + ";\n")
+
+# Allium SQL for the Method tab: blocks in sql/queries.sql start with "-- @name" and "-- @title"
+qs = []
+for blk in open(os.path.join(ROOT, "sql", "queries.sql")).read().split("-- @name ")[1:]:
+    lines = blk.split("\n")
+    title = next((l[len("-- @title "):] for l in lines if l.startswith("-- @title ")), lines[0].strip())
+    qs.append({"name": lines[0].strip(), "title": title, "sql": "\n".join(l for l in lines[1:] if not l.startswith("-- @title")).strip()})
+with open(os.path.join(SITE, "data", "sql.js"), "w") as f:
+    f.write("window.USDAI_SQL=" + json.dumps(qs) + ";\n")
 
 # CSV downloads
 os.makedirs(os.path.join(SITE, "downloads"), exist_ok=True)

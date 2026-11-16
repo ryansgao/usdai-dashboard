@@ -18,5 +18,20 @@
   "scanned_to": 524680888,
   "last_log_ts": 1794803633,
   "updated_utc": "2026-11-16T07:13Z"
+ },
+ "schip": {
+  "scanned_to": 524850774,
+  "last_log_ts": 1794672898,
+  "updated_utc": "2026-11-16T20:38Z"
+ },
+ "base_yield": {
+  "scanned_to": 524850791,
+  "last_log_ts": 1793052491,
+  "updated_utc": "2026-11-16T20:38Z"
+ },
+ "chip": {
+  "scanned_to": 455379231,
+  "last_log_ts": 1776915850,
+  "updated_utc": "2026-11-16T23:26Z"
  }
 }

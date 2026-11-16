@@ -20,14 +20,14 @@ Sets:
   schip        sCHIP (0x0D2d…4D4A): stake (Deposit) and unstake (Withdraw)
   base_yield   Base Yield Escrow (0x9Ddf…1A9E): T-bill style yield deposits and harvests
 
-Incremental: data/raw/chain/state.json records the last block scanned per set; a run resumes from there
-and appends a new gzip member.
+Incremental and resumable: data/raw/chain/state.json records the last block scanned per set, saved after every
+batch; a run resumes from there and appends new gzip members.
 
 Token: ENVIO_API_TOKEN in the environment, or a file named by ENVIO_TOKEN_FILE holding a line
 ENVIO_API_TOKEN=... (free Envio account). Never printed.
 Run:   uv run pipeline/fetch_chain.py [--only set1,set2] [--reset set1,set2]
 """
-import datetime as dt, gzip, json, os, shutil, sys, time, urllib.request
+import datetime as dt, gzip, json, os, sys, time, urllib.request
 from Crypto.Hash import keccak
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -107,44 +107,44 @@ FIELDS = ["block_number", "transaction_hash", "log_index", "address", "topic0", 
 
 
 def pull(name, filters, tok, state):
+    """Resumable: each batch is appended to the set's file as its own gzip member and the state is saved after it,
+    so an interrupted run loses at most one batch and the next run starts where it stopped."""
     path = os.path.join(OUT, name + ".jsonl.gz")
     st = state.get(name, {})
     frm = st["scanned_to"] + 1 if os.path.exists(path) and st.get("scanned_to") else START
-    first, part, n, top = frm, path + ".part", 0, None
-    last_ts = st.get("scanned_to_ts")
-    with gzip.open(part, "wt") as f:
-        while True:
-            body = {"from_block": frm, "logs": filters,
-                    "field_selection": {"log": FIELDS, "block": ["number", "timestamp"]}}
-            res = post(body, tok)
-            time.sleep(4.2)  # free plan: 15 requests a minute
-            for batch in res.get("data", []):
-                bts = {b["number"]: int(b["timestamp"], 16) for b in batch.get("blocks", []) if b.get("timestamp")}
-                for l in batch.get("logs", []):
-                    bn = l["block_number"]
-                    ts = bts.get(bn)
-                    f.write(json.dumps([bn, ts, l["transaction_hash"], l["log_index"], l["address"].lower(),
-                                        l.get("topic0"), l.get("topic1"), l.get("topic2"), l.get("topic3"),
-                                        l.get("data") or "0x"]) + "\n")
-                    n += 1
-                    last_ts = ts or last_ts
-            nxt, top = res.get("next_block"), res.get("archive_height")
-            if not nxt or (top and nxt >= top):
-                frm = nxt or frm
-                break
-            frm = nxt
-            if n:
-                print(f"  {name}: {n:,} rows, block {frm:,}/{top:,}", flush=True)
-    scanned_to = (top or frm) - 1
-    if os.path.exists(path):
-        with open(path, "ab") as dst, open(part, "rb") as src:  # second gzip member; readers concatenate
-            shutil.copyfileobj(src, dst)
-        os.remove(part)
-    else:
-        os.replace(part, path)
-    state[name] = {"scanned_to": scanned_to, "last_log_ts": last_ts,
-                   "updated_utc": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%MZ")}
-    json.dump(state, open(STATE, "w"), indent=1)
+    if frm == START and os.path.exists(path):
+        os.remove(path)                       # no state for an existing file: start the set clean
+    first, n, top = frm, 0, None
+    last_ts = st.get("scanned_to_ts") or st.get("last_log_ts")
+    while True:
+        body = {"from_block": frm, "logs": filters, "field_selection": {"log": FIELDS, "block": ["number", "timestamp"]}}
+        res = post(body, tok)
+        time.sleep(4.2)  # free plan: 15 requests a minute
+        lines = []
+        for batch in res.get("data", []):
+            bts = {b["number"]: int(b["timestamp"], 16) for b in batch.get("blocks", []) if b.get("timestamp")}
+            for l in batch.get("logs", []):
+                bn = l["block_number"]
+                ts = bts.get(bn)
+                lines.append(json.dumps([bn, ts, l["transaction_hash"], l["log_index"], l["address"].lower(),
+                                         l.get("topic0"), l.get("topic1"), l.get("topic2"), l.get("topic3"),
+                                         l.get("data") or "0x"]) + "\n")
+                last_ts = ts or last_ts
+        nxt, top = res.get("next_block"), res.get("archive_height")
+        done = not nxt or (top and nxt >= top)
+        scanned_to = ((top or nxt or frm) if done else nxt) - 1
+        if lines:
+            with gzip.open(path, "at") as f:
+                f.writelines(lines)
+            n += len(lines)
+        state[name] = {"scanned_to": scanned_to, "last_log_ts": last_ts,
+                       "updated_utc": dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%MZ")}
+        json.dump(state, open(STATE, "w"), indent=1)
+        if done:
+            break
+        frm = nxt
+        if n:
+            print(f"  {name}: {n:,} rows, block {frm:,}/{top:,}", flush=True)
     print(f"{name}: +{n:,} rows, blocks {first:,}-{scanned_to:,}")
 
 

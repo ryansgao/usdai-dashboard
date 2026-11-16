@@ -2,8 +2,8 @@
 // a chart with no marks, broken numbers (NaN, undefined, Infinity) or sideways overflow.
 // usage: node tools/render_check.cjs <base-url>   (needs the playwright package; CHROME=<path> to pick a browser)
 const { chromium } = require('playwright');
-const TABS = ['overview', 'vault', 'loans', 'yield', 'redemptions', 'chip', 'valuation', 'method'];
-const MIN_SVG = { overview: 2, vault: 4, loans: 2, yield: 3, redemptions: 1, chip: 2, valuation: 0, method: 0 };
+const TABS = ['overview', 'deposits', 'loans', 'yield', 'redemptions', 'chip', 'valuation', 'method'];
+const MIN_SVG = { overview: 3, deposits: 3, loans: 4, yield: 3, redemptions: 3, chip: 5, valuation: 2, method: 0 };
 const PASSES = [{ w: 1440, h: 900, scheme: 'light' }, { w: 390, h: 844, scheme: 'dark' }];
 (async () => {
   const base = process.argv[2].replace(/\/?$/, '/');
