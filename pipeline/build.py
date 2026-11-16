@@ -207,6 +207,13 @@ for tx, olds in mig_tx.items():
     news = new_tx.get(tx, [])
     if len(news) == len(olds):
         v2_of.update(dict(zip(news, olds)))
+# Two Apr 29 loans were re-issued under new ids on Jul 14, 2026 (tx 0x94aa38ab…, lender positions minted with no
+# LoanOriginated); same borrower addresses as the originals' v2 ids. Linked explicitly.
+REISSUED = {"0x71e912bb": "0x0357ad95", "0x81c8c979": "0xd02b09c8"}
+full = {h[:10]: h for h in loans}
+for new8, old8 in REISSUED.items():
+    if new8 in full and old8 in full:
+        v2_of[full[new8]] = full[old8]
 # a refinance continues the same loan under a new id; follow it back to the first id
 for x in list(loans.values()):
     if x.get("refi_of"):
@@ -348,6 +355,7 @@ d0 = dt.date.fromisoformat(first)
 rows = []
 price = None
 sup = usdai = schip = qsh = don_ps = 0.0
+prev_price, recent_steps = None, []
 cur = d0
 while cur.isoformat() <= AS_OF:
     d = cur.isoformat()
@@ -357,8 +365,13 @@ while cur.isoformat() <= AS_OF:
     schip += schip_delta.get(d, 0.0)
     x = daily.get(d, {})
     qsh += x.get("q_in", 0.0) - x.get("q_out", 0.0)
-    if x.get("donation") and sup:
-        don_ps += x["donation"] / sup          # the top-up's step in the share price
+    if x.get("donation") and price and prev_price:
+        # the payout day's whole step above a normal day: the top-up plus value left behind by redeemers
+        normal = sorted(recent_steps)[len(recent_steps) // 2] if recent_steps else 0.0
+        don_ps += max(0.0, (price - prev_price) - normal)
+    if price and prev_price:
+        recent_steps = (recent_steps + [price - prev_price])[-14:]
+    prev_price = price
     row = {"d": d, "share_price": r2(price, 6), "susdai_supply": r2(sup, 0),
            "susdai_assets": r2(sup * price, 0) if price else None,
            "usdai_supply": r2(usdai, 0) if U else None,
@@ -588,9 +601,16 @@ kpi["s2_airdrop"] = S2
 borrower_rows = sorted(({"addr": a_, "name": b_.get("name"), "name_loan": b_.get("name_loan"), "live": r2(b_["live"], 0), "lent": r2(b_["lent"], 0), "n": b_["n"],
                          "rate": r2(sum(rt * o for rt, o in b_["rates"]) / sum(o for _, o in b_["rates"]), 4) if b_["rates"] else None}
                         for a_, b_ in by_borrower.items()), key=lambda r: (-r["live"], -r["lent"]))
+open_esc = sum(e["usd"] for e in escrows if e["status"] == "open")
+if open_esc:
+    borrower_rows.append({"addr": "", "name": "Escrow facility", "name_loan": None, "live": r2(open_esc, 0), "lent": r2(open_esc, 0), "n": 1, "rate": 0.065, "escrow": True})
+    borrower_rows.sort(key=lambda r: -r["live"])
 tot_live = sum(r["live"] for r in borrower_rows) or 1
-kpi["top1_live_share"] = borrower_rows[0]["live"] / tot_live if borrower_rows else None
-kpi["top2_live_share"] = sum(r["live"] for r in borrower_rows[:2]) / tot_live if borrower_rows else None
+kpi["top3_committed_share"] = sum(r["live"] for r in borrower_rows[:3]) / tot_live
+loan_rows = [r for r in borrower_rows if not r.get("escrow")]
+tot_loans = sum(r["live"] for r in loan_rows) or 1
+kpi["top1_live_share"] = loan_rows[0]["live"] / tot_loans if loan_rows else None
+kpi["top2_live_share"] = sum(r["live"] for r in loan_rows[:2]) / tot_loans if loan_rows else None
 kpi["top1_lent_share"] = max(r["lent"] for r in borrower_rows) / (kpi["originated_usd"] or 1) if borrower_rows else None
 
 # what USD.AI says vs what the chain shows (research notes, section 4)

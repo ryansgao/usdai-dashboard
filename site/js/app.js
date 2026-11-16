@@ -67,9 +67,9 @@
   const topupLift = ok(K.apy_30d) && ok(K.apy_30d_ex) ? K.apy_30d - K.apy_30d_ex : null;
   // the month loan interest first beat PYUSD reserve yield and stayed ahead
   const overtook = (() => { const ms = (V.monthly || []).filter((m) => m.m < AS_OF.slice(0, 7)); let k = null; for (let i = ms.length - 1; i >= 0; i--) { if ((ms[i].loan_interest || 0) > (ms[i].base_yield || 0)) k = ms[i].m; else break; } return k; })();
-  const top2 = BOR.slice(0, 2);
+  const top2 = BOR.filter((b) => !b.escrow).slice(0, 2);
   const W = {
-    thesis: () => `sUSDai holds ${M$(K.vault_nav, 1)}, and ${pct(lentShare)} of it is lent to GPU operators or held in escrow for servers still being installed. Holders earned ${pct(K.apy_30d, 1)} a year over the last 30 days${ok(K.apy_30d_ex) && topupLift > 0.001 ? `, ${pct(K.apy_30d_ex, 1)} without the Foundation's November top-up` : ""}. CHIP, the governance token, has no legal claim on that income. On October 28 the company bought $1.0M of CHIP and proposed spending the protocol's 10% fee, about ${M$(FEE30)} a month, on more. In ${monthOf(K.unlock_date)}, ${bn(K.unlock_cliff_chip)} CHIP from investors and contributors unlock.`,
+    thesis: () => `sUSDai holds ${M$(K.vault_nav, 1)}, and ${pct(lentShare)} of it is lent to GPU operators or held in escrow for servers still being installed. Holders earned ${pct(K.apy_30d, 1)} a year over the last 30 days${ok(K.apy_30d_ex) && topupLift > 0.001 ? `, but only ${pct(K.apy_30d_ex, 1)} from the loans and reserves themselves: the rest is the Nov 1 step from the Foundation's top-up and the value redeemers left behind` : ""}. CHIP, the governance token, has no legal claim on that income. On October 28 the company bought $1.0M of CHIP and proposed spending the protocol's 10% fee, about ${M$(FEE30)} a month, on more. In ${monthOf(K.unlock_date)}, ${bn(K.unlock_cliff_chip)} CHIP from investors and contributors unlock.`,
     loansRead: () => `${top2.length === 2 ? `${top2.map((b) => b.name || short(b.addr)).join(" and ")} hold ${pct(K.top2_live_share)} of the vault's live loans.` : ""} The vault has lent ${M$(K.originated_usd)} since ${firstLoan ? dayOf(firstLoan.start) + ", " + firstLoan.start.slice(0, 4) : "–"} across ${K.loans_big} loans over $100K (plus ${K.loans_small} small ones), at ${rateRange} on the loans that state a rate.`,
     exitRead: () => `${M$(LP.usd)} left on ${dayOf(LP.d)}, ${bigPay[0] && bigPay[0].d === LP.d ? "the largest payout so far" : `second only to ${monthOf(bigPay[0] && bigPay[0].d)}'s ${M$(bigPay[0] && bigPay[0].usd)}`}, and ten wallets took ${pct(LP.top10)} of it. The vault paid from cash. ${ok(K.sale_principal) && K.sale_principal > 0 ? `${M$(K.sale_principal)} of that cash came from selling its largest loan through GLX a month earlier.` : ""}`,
     chipRead: () => `At the last 30 days' pace the fee comes to ${M$(feeYr, 1)} a year, ${pct(K.buyback_yield_on_mcap, 1)} of CHIP's market cap. The April unlock is worth ${M$(unlockUSD)} at today's price: ${yrs(K.buyback_months_for_cliff)} of fee. ${C(K.s2_airdrop)} more CHIP from the Season 2 airdrop can be claimed now, with no lock-up.`,
@@ -538,7 +538,7 @@
     const tiles = [
       ["In the vault", M$(K.vault_nav, 1), `sUSDai's assets, read from the contract on ${dayOf(RPC.read_utc || AS_OF)}`],
       ["Lent or in escrow", pct(lentShare), `${M$(K.vault_loans)} in live loans, ${M$(K.vault_escrow)} waiting on hardware`],
-      ["Holder yield, 30 days", pct(K.apy_30d, 1), ok(K.apy_30d_ex) ? `${pct(K.apy_30d_ex, 1)} without the November top-up; after the 10% fee` : "After the 10% fee"],
+      ["Holder yield, 30 days", pct(K.apy_30d, 1), ok(K.apy_30d_ex) ? `Organic ${pct(K.apy_30d_ex, 1)} without the Nov 1 step; after the 10% fee` : "After the 10% fee"],
     ];
     const kv = [
       ["sUSDai assets", "Shares × deposit share price", M$(K.susdai_assets, 1), arrow(K.assets_change_30d)],
@@ -591,7 +591,7 @@
         <li><b>Depositors</b> swap PYUSD for USDai, one to one (${M$(RPC.usdai_supply_arbitrum)} issued).</li>
         <li><b>sUSDai vault</b> takes staked USDai (${M$(K.vault_nav, 1)}); holders earn ${pct(K.apy_30d, 1)}.</li>
         <li><b>GPU operators</b> borrow from the vault: ${M$(K.vault_loans)} in live loans, ${M$(K.vault_escrow)} in escrow. They pay interest and principal back each month.</li>
-        <li><b>PYUSD reserve yield</b> (PayPal's 4.5% incentive) is paid into the vault on idle cash.</li>
+        <li><b>PYUSD reserve yield</b> (PayPal's 4.5% incentive, a one-year program from January 2026) is paid into the vault on idle cash.</li>
         <li><b>10% of all yield</b> goes to the protocol: ${M$(FEE30)} in the last 30 days.</li>
         <li><b>CHIP buybacks</b>: proposed, all of the fee after Foundation costs.</li>
         <li><b>Redemptions</b> are paid once a month from cash: ${M$(LP.usd)} on ${dayOf(LP.d)}.</li></ol>`;
@@ -648,7 +648,7 @@
     const sig = [
       { tab: "deposits", who: "sUSDai", name: "sUSDai assets", now: M$(K.susdai_assets, 1), why: `${K.assets_change_30d < 0 ? "Down" : "Up"} ${pct(Math.abs(K.assets_change_30d))} in 30 days, after ${M$(LP.usd)} was paid out on ${dayOf(LP.d)}`, spark: last("susdai_assets", 90), v: K.assets_change_30d < -0.1 ? "bad" : K.assets_change_30d > 0.05 ? "good" : "mixed" },
       { tab: "redemptions", who: "sUSDai", name: "Cash against the queue", now: ok(cover) ? Math.round(cover) + "×" : "–", why: `${M$(K.vault_cash, 1)} of cash against ${M$(K.queue_pending_usd, 1)} queued for ${dayOf(K.next_redemption)}`, spark: last("queue_usd", 90), v: cover > 3 ? "good" : cover > 1 ? "mixed" : "bad" },
-      { tab: "yield", who: "sUSDai", name: "Holder yield, 30 days", now: pct(K.apy_30d, 1), why: `${pct(K.apy_30d_ex, 1)} without the Nov 1 top-up; the hurdle rate is 7%`, spark: last("apy_30d", 90), v: K.apy_30d_ex >= 0.07 ? "good" : "mixed" },
+      { tab: "yield", who: "sUSDai", name: "Holder yield, 30 days", now: pct(K.apy_30d, 1), why: `Organic ${pct(K.apy_30d_ex, 1)}, below the 7% hurdle, so another top-up of about ${M$(K.vault_nav * Math.max(0, 0.07 - K.apy_30d_ex) * 30 / 365)} is likely on ${dayOf(K.next_redemption)}`, spark: last("apy_30d_ex", 90), v: K.apy_30d_ex >= 0.07 ? "good" : "mixed" },
       { tab: "loans", who: "sUSDai", name: "Two largest borrowers", now: pct(K.top2_live_share), why: `${top2.map((b) => b.name || short(b.addr)).join(" and ")}, of ${M$(K.live_principal)} in live loans`, v: K.top2_live_share > 0.4 ? "bad" : "mixed" },
       { tab: "chip", who: "CHIP", name: "Fee against the April unlock", now: yrs(K.buyback_months_for_cliff), why: `${M$(FEE30)} a month against ${M$(unlockUSD)} of CHIP unlocking in ${monthOf(K.unlock_date)}`, v: K.buyback_months_for_cliff > 24 ? "bad" : "mixed" },
       { tab: "chip", who: "CHIP", name: "CHIP price", now: chipP(K.chip_price), why: `${W.chipMove()} The Oct 28 buyback paid $0.0448`, spark: last("chip_price", 90), v: chg30 < -0.15 ? "bad" : chg30 > 0.15 ? "good" : "mixed" },
@@ -668,7 +668,7 @@
   PAGES.deposits = (view) => {
     const bridged = K.vault_bridged_share;
     const usdaiInVault = ok(RPC.usdai_supply_arbitrum) && ok(K.vault_cash) ? K.vault_cash / RPC.usdai_supply_arbitrum : null;
-    view.appendChild(intro(txt(`Deposits come in as PYUSD, become USDai one to one, and are staked as sUSDai. Plain USDai is rarely held: ${pct(usdaiInVault)} of it sits in the vault as cash. Two-thirds of sUSDai lives on other chains.`),
+    view.appendChild(intro(txt(`Since February 2026 deposits come in as PYUSD (before that, USDC and wrapped M, a tokenized T-bill), become USDai one to one, and are staked as sUSDai. Plain USDai is rarely held: ${pct(usdaiInVault)} of it sits in the vault as cash. Two-thirds of sUSDai lives on other chains.`),
       [["sUSDai shares", (K.vault_shares / 1e6).toFixed(1) + "M", `${pct(bridged)} bridged to Ethereum, Base, Plasma, Solana`], ["One sUSDai", (K.deposit_price || K.share_price || 0).toFixed(4) + " USDai", "Deposit share price"], ["USDai issued", M$(RPC.usdai_supply_arbitrum), `${pct(usdaiInVault)} inside sUSDai`]]));
     const parts = [
       { label: "Live loans", value: K.vault_loans || 0, color: "--c-diem", note: "Principal outstanding on loans the vault holds" },
@@ -712,9 +712,9 @@
   function borrowerChart() {
     const box = h("<div></div>");
     const rows = BOR.filter((b) => b.live > 0);
-    const el = staticFig({ slug: "borrowers", span: 6, title: `${top2.map((b) => b.name || short(b.addr)).join(" and ")} hold ${pct(K.top2_live_share)} of live loans`, sub: "Vault principal outstanding by borrower address", basis: "onchain", conf: "high", src: "Loan Router v1 and v2 originations less principal repaid", body: box,
+    const el = staticFig({ slug: "borrowers", span: 6, title: `Three obligors hold ${pct(K.top3_committed_share)} of the money lent or committed`, sub: "Vault principal outstanding by borrower, with the escrow facility as its own obligor", basis: "onchain", conf: "high", src: "Loan Router v1 and v2 originations less principal repaid", body: box,
       menu: csvMenu("borrowers", BOR) });
-    requestAnimationFrame(() => VC.hbars(box, { rows: rows.slice(0, 8).map((b) => ({ label: b.name || short(b.addr), value: b.live, color: "--c-diem", note: `${b.n} loan${b.n > 1 ? "s" : ""}, ${M$(b.lent)} lent in all${b.rate ? `, ${pct(b.rate, 1)}` : ""}${b.name ? ". Name matched by size and date" : ""}` })), fmt: F.usd, labelW: 120 }));
+    requestAnimationFrame(() => VC.hbars(box, { rows: rows.slice(0, 8).map((b) => ({ label: b.name || short(b.addr), value: b.live, color: b.escrow ? "--c-staked" : "--c-diem", note: `${b.n} loan${b.n > 1 ? "s" : ""}, ${M$(b.lent)} lent in all${b.rate ? `, ${pct(b.rate, 1)}` : ""}${b.name ? ". Name matched by size and date" : ""}` })), fmt: F.usd, labelW: 120 }));
     return el;
   }
   function origChart() {
@@ -753,7 +753,7 @@
     const terms = (l) => (l.rate ? `${pct(l.rate, 1)}, ${Math.round((l.term_days || 1095) / 365)} yr` : `<span class="muted">${l.router === "v1" || l.router === "v1→v2" ? "Not in v1 terms" : "–"}</span>`);
     const body = rows.map((l) => `<tr><td class="nowrap">${day(l.start)}</td><td>${l.name ? `<b>${l.name}</b> <span class="muted">matched</span><span class="sub-n">${addrLink(l.borrower)}</span>` : addrLink(l.borrower)}</td><td class="r bar-cell"><span class="bar" style="width:${Math.max(2, (l.principal_all / max) * 80)}px"></span><span>${l.n > 1 ? `${l.n} × ${F.usd(l.principal)}` : F.usd(l.principal)}</span></td><td class="r hide-sm">${terms(l)}</td><td class="r hide-sm">${F.usd(l.interest_paid)}</td><td>${ST_TXT[l.status] || l.status}</td></tr>`).join("");
     const tot = `<tr class="tot"><td colspan="2"><b>Total</b>, ${K.loans_total} loans</td><td class="r"><b>${F.usd(K.originated_usd)}</b></td><td class="hide-sm"></td><td class="r hide-sm"><b>${F.usd(d3.sum(all, (l) => l.interest_paid))}</b></td><td></td></tr>`;
-    return staticFig({ slug: "loan-list", span: 12, title: `${K.loans_big} loans over $100K, and ${K.loans_small} small ones`, sub: "Live loans first, largest first. Rates are written into router v2 loans only. Interest is what each loan paid under its own id; payments after a refinance can sit under the new id",
+    return staticFig({ slug: "loan-list", span: 12, title: `${K.loans_big} loans over $100K, and ${K.loans_small} small ones`, sub: "Live loans first, largest first. Rates are written into router v2 loans only. Interest is what the borrower paid all lenders, across moves, re-issues and refinances",
       basis: "onchain", conf: "high", src: "Loan Router v1 0x0C2E…97D1 and v2 0x1c2e…e12f on Arbitrum",
       menu: csvMenu("loans", LOANS.map((l) => ({ start: l.start, name: l.name || "", borrower: l.borrower, principal: l.principal, outstanding: l.outstanding, rate: l.rate, term_days: l.term_days, status: l.status, router: l.router, interest_paid: l.interest_paid, hash: l.hash }))),
       body: `<div class="tw"><table class="t loans"><thead><tr><th>Start</th><th>Borrower</th><th class="r">Principal</th><th class="r hide-sm">Rate, term</th><th class="r hide-sm">Interest paid</th><th>Status</th></tr></thead><tbody>${body}${tot}</tbody></table></div>` });
@@ -777,20 +777,20 @@
   PAGES.yield = (view) => {
     const gap = ok(K.deposit_price) && ok(K.redemption_price) ? 1 - K.redemption_price / K.deposit_price : null;
     view.appendChild(intro(txt(`sUSDai pays nothing out: its price rises as borrowers pay and as idle cash earns PayPal's PYUSD incentive, after a 10% fee. Since mid-October the CHIP Foundation tops up any 30-day period that earns under 7%.`),
-      [["Last 30 days", pct(K.apy_30d, 1), `${pct(K.apy_30d_ex, 1)} without the top-up`], ["Pendle fixed rate", pct(K.pt_apy, 1), "Locked to Feb 2027"], ["Leaving costs", ok(gap) ? pct(gap, 2) : "–", "Redemption price below deposit price"]]));
+      [["Last 30 days", pct(K.apy_30d, 1), `Organic ${pct(K.apy_30d_ex, 1)} without the Nov 1 step`], ["Pendle fixed rate", pct(K.pt_apy, 1), "Locked to Feb 2027"], ["Leaving costs", ok(gap) ? pct(gap, 2) : "–", "Redemption price below deposit price"]]));
     view.appendChild(grid(yieldChart()));
     view.appendChild(grid(hurdleFig(), incomeChart(6)));
   };
   function yieldChart() {
     const rows = D.filter((r) => r.apy_30d != null);
-    return chartFig({ slug: "yield", span: 12, events: true, eventsBelow: true, title: `Locking sUSDai to February 2027 pays ${pct(K.pt_apy, 1)}, against ${pct(K.apy_30d, 1)} trailing`, sub: "30-day yield from the sUSDai share price, with and without the Nov 1 top-up; Pendle's fixed rate for PT-sUSDai; the 7% hurdle since Oct 15", basis: "mixed", src: "Share price from sUSDai deposits on Arbitrum; Pendle PT-sUSDai Feb 2027 via DefiLlama",
+    return chartFig({ slug: "yield", span: 12, events: true, eventsBelow: true, title: `Organic yield has run near ${pct(K.apy_30d_ex, 1)} since mid-October; the Nov 1 step lifted the 30-day figure to ${pct(K.apy_30d, 1)}`, sub: "30-day yield from the sUSDai share price, with and without the Nov 1 step (top-up plus redeemers' leftover); Pendle's fixed rate for PT-sUSDai; the 7% hurdle since Oct 15", basis: "mixed", src: "Share price from sUSDai deposits on Arbitrum; Pendle PT-sUSDai Feb 2027 via DefiLlama",
       csvCols: ["apy_30d", "apy_30d_ex", "pt_apy", "share_price"], time: { rows, key: "d", def: "1Y", agg: { apy_30d: "mean", apy_30d_ex: "mean", pt_apy: "mean", hurdle: "mean" } } },
       (r) => ({ data: r, height: 300, yMin: 0, series: [
         { key: "apy_30d", label: "sUSDai, 30 days", color: "--c-lead", type: "line", fmt: (v) => pct(v, 2), width: 1.75 },
-        { key: "apy_30d_ex", label: "Without the top-up", color: "--c-cmp", type: "line", fmt: (v) => pct(v, 2) },
+        { key: "apy_30d_ex", label: "Organic", color: "--c-cmp", type: "line", fmt: (v) => pct(v, 2) },
         { key: "pt_apy", label: "Pendle fixed rate", color: "--c-burn", type: "line", fmt: (v) => pct(v, 2) },
         { key: "hurdle", label: "7% hurdle", color: "--muted", type: "line", dash: true, fmt: (v) => pct(v, 0) },
-      ], yFormat: F.pct0, tipNote: () => "Pendle's rate is higher because the buyer gives up the 30-day exit and the points go to the yield-token side",
+      ], yFormat: F.pct0, tipNote: () => "Pendle's fixed rate mostly prices Allo points and a thin pool (about $4M), so it is not a forecast of vault yield",
         events: evs((e) => ["2026-10-01", "2026-11-01"].includes(e.d)) }));
   }
   function hurdleFig() {
@@ -806,7 +806,7 @@
   }
   function incomeChart(span) {
     const rows = MROWS.filter((m) => m.m >= "2025-07");
-    return chartFig({ slug: "income", span: span === 6 ? 6 : 7, title: overtook ? `Loan interest has out-earned the PYUSD reserve since ${monthOf(overtook)}` : "Where the vault's income comes from", sub: "Cash booked by sUSDai per month, by source, after the 10% fee. February holds six months of PYUSD yield booked at once", basis: "onchain", conf: "high", src: "LenderRepaid (vault), BaseYieldDeposited, LoanEscrowTimelock interest, Donated; sUSDai and the Loan Routers",
+    return chartFig({ slug: "income", span: span === 6 ? 6 : 7, title: overtook ? `Loan interest has out-earned the PYUSD reserve since ${monthOf(overtook)}` : "Where the vault's income comes from", sub: "Cash booked by sUSDai per month, by source, after the 10% fee. Until February 2026 USDai was backed by USDC and wrapped M; their yield arrived in one $7.8M batch on Feb 2. Since then PYUSD earns PayPal's 4.5% incentive, paid monthly", basis: "onchain", conf: "high", src: "LenderRepaid (vault), BaseYieldDeposited, LoanEscrowTimelock interest, Donated; sUSDai and the Loan Routers",
       csvCols: ["loan_interest", "loan_interest_sale", "base_yield", "escrow_interest", "donation", "fee_modeled"], time: { rows, key: "m", def: "6M", bars: true } },
       (r) => ({ data: r, height: 260, series: [
         { key: "loan_interest", label: "Loan interest", color: "--c-burn", type: "bar", stack: "a", fmt: F.usd },
@@ -1006,7 +1006,8 @@
       ["against", "CHIP has no claim on anything", "The Foundation's terms say CHIP gives no right to revenue; the buyback was a company purchase and the fee routing is a proposal.", "A passed vote that routes the fee to CHIP on-chain", true],
       ["against", "The unlock dwarfs the fee", `${M$(unlockUSD)} of CHIP unlocks in April 2027 against ${M$(feeYr, 1)} a year of fee.`, "Several times today's deposits, or a later schedule", true],
       ["against", "Few borrowers, a few big depositors", `Two borrowers hold ${pct(K.top2_live_share)} of live loans; ten wallets took ${pct(LP.top10)} of the last payout.`, "More borrowers; payouts spread across more wallets", true],
-      ["against", "Part of the yield is PayPal's", "The PYUSD incentive pays 4.5% on idle cash; it is PayPal's promotion and can change.", "Loan interest alone above 7%", true],
+      ["against", "Part of the yield is PayPal's, and may end", "The PYUSD incentive pays 4.5% on idle cash. PayPal announced it as a one-year program from January 2026; nothing on renewal.", "A renewal announcement, or loan interest alone above 7%", true],
+      ["against", "Organic yield is below the 7% promise", `Organic yield is ${pct(K.apy_30d_ex, 1)}; topping up to 7% at that rate costs about ${M$(K.vault_nav * Math.max(0, 0.07 - K.apy_30d_ex))} a year, most of the fee the proposal would send to CHIP.`, "Organic yield back above 7%", K.apy_30d_ex < 0.07],
       ["against", "GPUs lose value fast", "Collateral depreciates about 20% a year (Blockmedia) while loans amortize over three years.", "Resale prices for B200/B300 holding up", true],
     ];
     const body = ["for", "against"].map((side) => `<tr class="grp"><th colspan="3" scope="colgroup">${side === "for" ? "For USD.AI and CHIP" : "Against"}</th></tr>${rows.filter((r) => r[0] === side).map((r) => `<tr><td><b>${r[1]}</b><div class="ev">${r[2]}</div></td><td>${r[3]}</td><td>${yes(r[4], r[0])}</td></tr>`).join("")}`).join("");
