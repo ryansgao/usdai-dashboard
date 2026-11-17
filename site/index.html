@@ -10,6 +10,8 @@
 <meta property="og:description" content="How USD.AI lends to GPU operators, what sUSDai holders earn, and how much of it reaches CHIP, read from Arbitrum.">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131113" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="css/app.css">
 <script src="js/theme.js"></script>
 </head>
@@ -18,7 +20,7 @@
 <header class="topbar" id="top">
   <div class="top-in">
     <a class="brand" href="./" data-tab="overview" aria-label="USD.AI deep dive, overview">
-      <svg viewBox="0 0 32 32" aria-hidden="true" class="mark"><rect x="3" y="3" width="26" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="2.4"/><rect x="10" y="10" width="12" height="12" rx="2" fill="currentColor"/><path d="M8 3v-2M16 3v-2M24 3v-2M8 31v-2M16 31v-2M24 31v-2M3 8h-2M3 16h-2M3 24h-2M31 8h-2M31 16h-2M31 24h-2" stroke="currentColor" stroke-width="2"/></svg>
+      <svg viewBox="16 20 68 60" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="mark"><path d="M81.8061 40.7439L80.1658 43.0404L78.5254 45.3358L75.2448 49.9287L73.6056 52.2252L70.8803 50.6097L68.1551 48.9943L65.4299 47.38L62.7047 45.7645L59.9806 44.1491L57.2554 42.5347L54.5301 40.9193L51.8049 39.3038L51.082 38.8751V22.5339L51.8309 22.9774L54.5562 24.5928L57.2802 26.2083L60.0055 27.8226L62.7307 29.4381L65.4559 31.0535L68.1811 32.669L70.9052 34.2833L73.6304 35.8987L76.3557 37.5142L79.0809 39.1285L81.8061 40.7439Z"/><path d="M71.9652 54.5207L67.0442 61.4102L65.405 63.7055L63.7647 66.002L61.0394 64.3865L58.3142 62.7722L55.589 61.1568L52.8638 59.5413L51.082 58.4858V42.1436L52.8898 43.216L55.615 44.8303L58.3402 46.4458L61.0655 48.0612L63.7896 49.6755L66.5148 51.291L69.24 52.9064L71.9652 54.5207Z"/><path d="M62.1243 68.2983L60.484 70.5948L58.8437 72.8901L57.2033 75.1866L55.5641 77.483L52.8389 75.8676L51.082 74.8268V61.7539L51.2246 61.8376L53.9487 63.4531L56.6739 65.0674L59.3991 66.6828L62.1243 68.2983Z"/><path d="M18.0977 40.7439L19.738 43.0404L21.3783 45.3358L24.659 49.9287L26.2982 52.2252L29.0234 50.6097L31.7487 48.9943L34.4739 47.38L37.1991 45.7645L39.9232 44.1491L42.6484 42.5347L45.3736 40.9193L48.0989 39.3038L48.8217 38.8751V22.5339L48.0728 22.9774L45.3476 24.5928L42.6235 26.2083L39.8983 27.8226L37.1731 29.4381L34.4479 31.0535L31.7226 32.669L28.9985 34.2833L26.2733 35.8987L23.5481 37.5142L20.8229 39.1285L18.0977 40.7439Z"/><path d="M27.9453 54.5207L32.8663 61.4102L34.5055 63.7055L36.1459 66.002L38.8711 64.3865L41.5963 62.7722L44.3215 61.1568L47.0468 59.5413L48.8285 58.4858V42.1436L47.0207 43.216L44.2955 44.8303L41.5703 46.4458L38.8451 48.0612L36.121 49.6755L33.3958 51.291L30.6705 52.9064L27.9453 54.5207Z"/><path d="M37.7852 68.2983L39.4255 70.5948L41.0658 72.8901L42.7062 75.1866L44.3454 77.483L47.0706 75.8676L48.8275 74.8268V61.7539L48.6849 61.8376L45.9608 63.4531L43.2356 65.0674L40.5104 66.6828L37.7852 68.2983Z"/></svg>
       <span class="brand-t"><b>USD.AI</b><span>USDai, sUSDai and CHIP on Arbitrum</span></span>
     </a>
     <div class="quote" id="quote"></div>
@@ -32,6 +34,7 @@
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12.5h10"/></svg><span class="lbl">Download</span><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4.5 6.5 3.5 3.5 3.5-3.5"/></svg>
         </button>
         <div class="menu" role="menu" hidden>
+          <a role="menuitem" href="downloads/usdai-deep-dive-data.xlsx" download>Workbook, every table (.xlsx)</a>
           <a role="menuitem" href="downloads/usdai_daily.csv" download>Daily table (.csv)</a>
           <a role="menuitem" href="downloads/usdai_monthly.csv" download>Monthly table (.csv)</a>
           <a role="menuitem" href="downloads/usdai_loans.csv" download>Loans (.csv)</a>

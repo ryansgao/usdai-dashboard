@@ -1,32 +1,32 @@
 {
- "block": 524680321,
- "read_utc": "2026-11-16T07:11:01Z",
- "vault_total_assets": 442176097.4620835,
- "vault_nav": 442176097.4620835,
+ "block": 524913794,
+ "read_utc": "2026-11-17T02:08:30Z",
+ "vault_total_assets": 442240590.22958124,
+ "vault_nav": 442240590.22958124,
  "vault_total_shares": 392616195.9136242,
- "vault_supply_arbitrum": 124074630.62074918,
- "vault_bridged_supply": 264240365.43045998,
+ "vault_supply_arbitrum": 128462433.83795203,
+ "vault_bridged_supply": 259472986.858603,
  "vault_cash": [
-  134493692.86475915,
-  79519.81669240136
+  134493185.9386522,
+  79012.89058544683
  ],
  "vault_loans": [
   176598173.53645524,
-  808678.132861352
+  846928.2868620895
  ],
  "vault_deposit_timelock": 128895244.1,
- "vault_claimable_base_yield": 485129.64975891926,
- "vault_deposit_price": 1.1262298959245238,
- "vault_redemption_price": 1.1215640413014978,
+ "vault_claimable_base_yield": 500406.36742660624,
+ "vault_deposit_price": 1.1263941600791079,
+ "vault_redemption_price": 1.1215990603507475,
  "vault_redemption_time": "2026-12-01T06:00Z",
  "vault_queue": {
-  "index": 3614,
+  "index": 3617,
   "head": 3529,
-  "tail": 3614,
-  "pending_shares": 4301199.862415048,
-  "balance": 79519.81669240136
+  "tail": 3617,
+  "pending_shares": 4680775.2170692105,
+  "balance": 79012.89058544683
  },
- "usdai_supply_arbitrum": 156079784.70014,
+ "usdai_supply_arbitrum": 156079156.14292204,
  "chip_supply_arbitrum": 10000000000.0,
  "schip_supply": 41988162.64429144,
  "schip_assets": 41988162.64429144

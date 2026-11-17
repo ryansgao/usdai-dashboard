@@ -15,6 +15,7 @@ else
 fi
 uv run -q pipeline/build.py >/dev/null || fail "build failed"
 uv run -q python pipeline/check_facts.py || fail "fact gate failed"
+uv run -q pipeline/export_xlsx.py >/dev/null || fail "excel export failed"
 if node -e "require('playwright')" 2>/dev/null; then
   PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
   python3 -m http.server "$PORT" --bind 127.0.0.1 --directory site >/dev/null 2>&1 & SRV=$!

@@ -1,37 +1,37 @@
 {
  "susdai": {
-  "scanned_to": 524678049,
-  "last_log_ts": 1794806123,
-  "updated_utc": "2026-11-16T06:59Z"
+  "scanned_to": 524913811,
+  "last_log_ts": 1794875708,
+  "updated_utc": "2026-11-17T02:08Z"
  },
  "loans": {
-  "scanned_to": 524678092,
+  "scanned_to": 524913830,
   "last_log_ts": 1783375994,
-  "updated_utc": "2026-11-16T06:59Z"
+  "updated_utc": "2026-11-17T02:08Z"
  },
  "loans2": {
-  "scanned_to": 524679017,
+  "scanned_to": 524913847,
   "last_log_ts": 1794233761,
-  "updated_utc": "2026-11-16T07:04Z"
+  "updated_utc": "2026-11-17T02:08Z"
  },
  "usdai": {
-  "scanned_to": 524680888,
-  "last_log_ts": 1794803633,
-  "updated_utc": "2026-11-16T07:13Z"
+  "scanned_to": 524913863,
+  "last_log_ts": 1794878254,
+  "updated_utc": "2026-11-17T02:08Z"
  },
  "schip": {
-  "scanned_to": 524850774,
+  "scanned_to": 524913883,
   "last_log_ts": 1794672898,
-  "updated_utc": "2026-11-16T20:38Z"
+  "updated_utc": "2026-11-17T02:09Z"
  },
  "base_yield": {
-  "scanned_to": 524850791,
+  "scanned_to": 524913901,
   "last_log_ts": 1793052491,
-  "updated_utc": "2026-11-16T20:38Z"
+  "updated_utc": "2026-11-17T02:09Z"
  },
  "chip": {
-  "scanned_to": 455862247,
-  "last_log_ts": 1777036649,
-  "updated_utc": "2026-11-16T23:33Z"
+  "scanned_to": 501356249,
+  "last_log_ts": 1788447646,
+  "updated_utc": "2026-11-17T01:14Z"
  }
 }

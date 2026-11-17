@@ -1,100 +1,102 @@
 {
  "coingecko/btc_chart.json": {
-  "fetched_utc": "2026-11-16T07:10:39Z",
+  "fetched_utc": "2026-11-17T02:08:05Z",
   "ok": true,
   "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily"
  },
  "coingecko/chip.json": {
-  "fetched_utc": "2026-11-16T07:10:31Z",
+  "fetched_utc": "2026-11-17T02:07:57Z",
   "ok": true,
   "url": "https://api.coingecko.com/api/v3/coins/chip-2?localization=false&tickers=false&community_data=false&developer_data=false"
  },
  "coingecko/chip_chart.json": {
-  "fetched_utc": "2026-11-16T07:10:35Z",
+  "fetched_utc": "2026-11-17T02:08:01Z",
   "ok": true,
   "url": "https://api.coingecko.com/api/v3/coins/chip-2/market_chart?vs_currency=usd&days=365&interval=daily"
  },
  "defillama/fees.json": {
-  "fetched_utc": "2026-11-16T07:10:29Z",
+  "fetched_utc": "2026-11-17T02:07:50Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/usd-ai?dataType=dailyFees"
  },
  "defillama/pool_pt_feb27.json": {
-  "fetched_utc": "2026-11-16T07:10:31Z",
+  "fetched_utc": "2026-11-17T02:07:56Z",
   "ok": true,
   "url": "https://yields.llama.fi/chart/b44dc004-56b7-48d0-97b6-da33ead5e6eb"
  },
  "defillama/pool_susdai.json": {
-  "fetched_utc": "2026-11-16T07:10:30Z",
+  "fetched_utc": "2026-11-17T02:07:54Z",
   "ok": true,
   "url": "https://yields.llama.fi/chart/712ce948-bd9e-4f4a-8916-b72c447f7578"
  },
  "defillama/protocol.json": {
-  "fetched_utc": "2026-11-16T07:10:29Z",
+  "fetched_utc": "2026-11-17T02:07:48Z",
   "ok": true,
   "url": "https://api.llama.fi/protocol/usd-ai"
  },
  "defillama/revenue.json": {
-  "fetched_utc": "2026-11-16T07:10:29Z",
+  "fetched_utc": "2026-11-17T02:07:51Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/usd-ai?dataType=dailyRevenue"
  },
  "defillama/stablecoin.json": {
-  "fetched_utc": "2026-11-16T07:10:29Z",
+  "fetched_utc": "2026-11-17T02:07:53Z",
   "ok": true,
   "url": "https://stablecoins.llama.fi/stablecoin/309"
  },
  "peers/coingecko-markets.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:26Z",
   "ok": true,
   "url": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=syrup,ethena,gaib"
  },
  "peers/ethena-fees.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:20Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/ethena?dataType=dailyFees"
  },
  "peers/ethena-protocol.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:16Z",
   "ok": true,
   "url": "https://api.llama.fi/protocol/ethena"
  },
  "peers/ethena-revenue.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:18Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/ethena?dataType=dailyRevenue"
  },
  "peers/gaib-fees.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:25Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/gaib?dataType=dailyFees"
  },
  "peers/gaib-protocol.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:22Z",
   "ok": true,
   "url": "https://api.llama.fi/protocol/gaib"
  },
  "peers/gaib-revenue.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:23Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/gaib?dataType=dailyRevenue"
  },
  "peers/maple-fees.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:14Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/maple?dataType=dailyFees"
  },
  "peers/maple-protocol.json": {
-  "fetched_utc": "2026-11-16T07:10:43Z",
+  "fetched_utc": "2026-11-17T02:08:10Z",
   "ok": true,
   "url": "https://api.llama.fi/protocol/maple"
  },
  "peers/maple-revenue.json": {
-  "fetched_utc": "2026-11-16T07:10:44Z",
+  "fetched_utc": "2026-11-17T02:08:12Z",
   "ok": true,
   "url": "https://api.llama.fi/summary/fees/maple?dataType=dailyRevenue"
  },
  "rpc/state.json": {
-  "ok": false
+  "fetched_utc": "2026-11-17T02:08:34Z",
+  "ok": true,
+  "url": "https://arb1.arbitrum.io/rpc"
  }
 }

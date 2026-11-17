@@ -637,6 +637,30 @@ kpi["top1_live_share"] = loan_rows[0]["live"] / tot_loans if loan_rows else None
 kpi["top2_live_share"] = sum(r["live"] for r in loan_rows[:2]) / tot_loans if loan_rows else None
 kpi["top1_lent_share"] = max(r["lent"] for r in borrower_rows) / (kpi["originated_usd"] or 1) if borrower_rows else None
 
+# Where CHIP sits: labelled holder snapshot on Arbitrum (Arbiscan + Blockscout, read 2026-11-17; research/chip-token.md §6)
+HOLDERS = {
+    "as_of": "2026-11-17", "holders_arbitrum": 6827, "holders_ethereum": 728,
+    "split": [  # CHIP, in millions; sums to the 10B supply
+        {"key": "investors", "label": "Investors", "m": 2960, "locked": True},
+        {"key": "contributors", "label": "Contributors", "m": 2310, "locked": True},
+        {"key": "reserve", "label": "Foundation reserve", "m": 1980, "locked": True},
+        {"key": "ecosystem", "label": "Foundation ecosystem and claim contracts", "m": 1100, "locked": False},
+        {"key": "exchanges", "label": "Exchange wallets", "m": 750, "locked": False},
+        {"key": "other", "label": "Other holders, pools, bridge, staked", "m": 900, "locked": False},
+    ],
+    "top": [
+        ("0xd734…8c75", 1640.4, "Core contributors"), ("0x5744…1Ce8", 1281.5, "Investors"),
+        ("0x45F3…f45b", 694.5, "Reserve (votes delegated)"), ("0x8e80…93dd", 659.9, "Reserve (votes delegated)"),
+        ("0x7e8d…8baB", 583.3, "Investor sub-wallet"), ("0x3369…c42b", 507.3, "Investors"),
+        ("0x403f…89cA", 500.0, "Reserve (votes delegated)"), ("0x30Ac…0Fb3", 494.0, "Ecosystem"),
+        ("0xE237…a05", 467.3, "Foundation Safe"), ("0x62b9…0C0E", 327.3, "Investor sub-wallet"),
+        ("0xF977…aceC", 182.1, "Binance"), ("0x07Cf…ACD", 129.3, "Upbit"),
+        ("0xffC1…cF4e", 114.3, "Bridge lock (other chains)"), ("0x0963…60f7", 98.4, "Season 2 claim, unclaimed"),
+        ("0x841e…3a34", 92.1, "Robinhood"), ("0x0D2d…4D4A", 42.0, "sCHIP staking"),
+        ("0xcd9C…97c8", 22.3, "USD.AI Inc. buyback Safe"),
+    ],
+}
+
 # what USD.AI says vs what the chain shows (research notes, section 4)
 REPORTED = [
     {"d": "2026-06-08", "what": "TVL $398M, $202M deployed, 13 active loans", "src": "Lighthouse YTD report"},
@@ -697,7 +721,7 @@ meta = {
     "first_day": rows[0]["d"],
 }
 out = {"meta": meta, "kpi": kpi, "daily": rows, "monthly": mon, "loans": loan_list, "escrows": escrows,
-       "borrowers": borrower_rows, "reported": REPORTED,
+       "borrowers": borrower_rows, "reported": REPORTED, "holders": HOLDERS,
        "payouts": merged, "events": events, "peers": peers, "unlocks": sched}
 os.makedirs(os.path.join(SITE, "data"), exist_ok=True)
 with open(os.path.join(SITE, "data", "data.js"), "w") as f:

@@ -864,6 +864,7 @@
       [["Price", chipP(K.chip_price), "Close, " + dayOf(AS_OF)], ["Circulating", bn(K.chip_circ), "of 10B CHIP"], ["Highest close", chipP(K.chip_ath_close), dayOf(K.chip_ath_close_date) + "; intraday " + chipP(K.chip_ath)]]));
     view.appendChild(grid(chipChart()));
     view.appendChild(band(["Buybacks against unlocks", "What the 10% fee can buy, against the CHIP that becomes sellable."], grid(unlockChart(), buybackFacts()), grid(calcBuyback())));
+    view.appendChild(band(["Who holds CHIP", "A labelled snapshot of every large wallet on Arbitrum."], grid(holdersSplit()), grid(holdersTable(), holdersFacts())));
     view.appendChild(band(["Trading and staking", "Where CHIP trades and how much of it is staked."], grid(volumeChart(), stakedChart())));
   };
   function chipChart() {
@@ -942,6 +943,27 @@
     el.querySelectorAll(".presets button").forEach((b) => b.addEventListener("click", () => { inp("c1").value = b.dataset.g; if (b.textContent === "Today") { inp("c2").value = gy0; inp("c3").value = p0; } run(); }));
     requestAnimationFrame(run);
     return el;
+  }
+  const HOLD = V.holders || { split: [], top: [] };
+  function holdersSplit() {
+    const sp = HOLD.split, locked = d3.sum(sp.filter((x) => x.locked), (x) => x.m), ex = (sp.find((x) => x.key === "exchanges") || {}).m;
+    const COL = { investors: "--c-lead", contributors: "--c-staked", reserve: "--c-diem", ecosystem: "--c-float", exchanges: "--c-burn", other: "--c-other" };
+    const box = h('<div class="sb-wrap"></div>');
+    const el = staticFig({ slug: "chip-split", span: 12, title: `${pct(locked / 10000)} of CHIP sits in insider and reserve wallets that unlock from April 2027`, sub: `All 10B CHIP by holder group. Of the "2B circulating", about 1.1B is still in Foundation wallets and claim contracts, and at least ${(ex / 1000).toFixed(2)}B is on exchanges`, basis: "onchain", conf: "medium", src: `Arbiscan and Blockscout holder lists, labelled from Binance Research and transfer history, ${dayOf(HOLD.as_of)}. Exchange deposit wallets below the top 150 are not counted`, body: box,
+      menu: csvMenu("chip_holder_groups", sp.map((x) => ({ group: x.label, chip_m: x.m, locked_until_apr_2027: x.locked }))) });
+    requestAnimationFrame(() => VC.stackBar(box, { parts: sp.map((x) => ({ label: x.label, value: x.m * 1e6, color: COL[x.key], hatch: x.locked, note: x.locked ? "No vesting contract: the lock is a promise; insider tokens sit in ordinary wallets" : "" })), fmt: (v) => (v / 1e9).toFixed(2) + "B", total: 1e10 }));
+    return el;
+  }
+  function holdersTable() {
+    const body = HOLD.top.map(([a, m, l], i) => `<tr><td class="r muted">${i + 1}</td><td>${esc(l)}<span class="sub-n">${esc(a)}</span></td><td class="r bar-cell"><span class="bar" style="width:${(m / HOLD.top[0][1]) * 90}px"></span><span>${m >= 1000 ? (m / 1000).toFixed(2) + "B" : m.toFixed(1) + "M"}</span></td><td class="r">${pct(m / 10000, 1)}</td></tr>`).join("");
+    return staticFig({ slug: "chip-top", span: 8, title: "The ten largest wallets hold 72% of supply, all insiders or the Foundation", sub: "Largest CHIP holders on Arbitrum, labelled", basis: "onchain", conf: "medium", src: `Arbiscan, Blockscout; labels from Binance Research and transfer history, ${dayOf(HOLD.as_of)}`,
+      menu: csvMenu("chip_top_holders", HOLD.top.map(([a, m, l]) => ({ address: a, chip_m: m, label: l }))),
+      body: `<div class="tw"><table class="t"><thead><tr><th class="r">#</th><th>Holder</th><th class="r">CHIP</th><th class="r">Of supply</th></tr></thead><tbody>${body}</tbody></table></div>` });
+  }
+  function holdersFacts() {
+    const rows = [["Holders on Arbitrum", F.int(HOLD.holders_arbitrum), "Addresses with any CHIP"], ["Holders on Ethereum", F.int(HOLD.holders_ethereum), "Bridged CHIP"], ["Exchange wallets", "≥ 750M", "Binance 287M, Bybit 134M, Upbit 129M, Robinhood 96M"], ["Season 2 unclaimed", "98.4M", "Claimable until Jan 31, 2027"], ["Buyback Safe", "22.3M", "Has not moved or voted since Oct 26"]];
+    return staticFig({ slug: "chip-holder-facts", span: 4, title: "Holders in numbers", sub: dayOf(HOLD.as_of) + " snapshot", basis: "onchain", src: "Arbiscan, Blockscout",
+      body: `<table class="kv" style="margin:4px 0"><tbody>${rows.map(([l, v, d]) => `<tr><td><span class="lab">${l}</span><span class="def">${d}</span></td><td class="v">${v}</td></tr>`).join("")}</tbody></table>` });
   }
   function volumeChart() {
     const rows = rowsWith("chip_vol");
