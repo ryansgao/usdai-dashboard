@@ -453,13 +453,28 @@
     document.querySelectorAll("#tabs a[data-tab]").forEach((a) => (a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
     document.title = (tab === "overview" ? "" : TABS.find((t) => t[0] === tab)[1] + " · ") + "USD.AI and CHIP · Deep dive";
   }
+  /* ---------- experiment: numbers count up once, cards rise in as they scroll into view ---------- */
+  const countUp = (root) => {
+    if (REDUCE()) return;
+    root.querySelectorAll(".tile .v, .facts .fv, .kv td.v").forEach((el) => {
+      const m = el.textContent.match(/^([^0-9−-]*)([−-]?[0-9][0-9,]*\.?[0-9]*)(.*)$/);
+      if (!m) return;
+      const end = parseFloat(m[2].replace(/,/g, "").replace("−", "-")), dec = (m[2].split(".")[1] || "").length;
+      if (!isFinite(end)) return;
+      const t0 = performance.now(), dur = 700;
+      const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = m[1] + (end * e).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3]; if (k < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
+  };
+  const revealObs = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); revealObs.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" }) : null;
+  const reveal = (root) => { if (!revealObs || REDUCE()) return; root.querySelectorAll(".fig").forEach((f, i) => { if (f.getBoundingClientRect().top < window.innerHeight) return; f.classList.add("reveal"); revealObs.observe(f); }); };
   function build(anim) {
     const view = $("#view");
     VC.dispose(view);
     const full = document.querySelector(".fig.full"); if (full && full.__exitFull) full.__exitFull(true);
     ANIM = !!anim && !REDUCE();
     view.innerHTML = "";
-    try { PAGES[tab](view); leadIn(view); requestAnimationFrame(() => requestAnimationFrame(markScroll)); } catch (e) { console.error(e); view.innerHTML = `<p class="nojs">This page could not load its data. <button class="tbtn" type="button" onclick="location.reload()">Reload</button></p>`; }
+    try { PAGES[tab](view); leadIn(view); countUp(view); requestAnimationFrame(() => reveal(view)); requestAnimationFrame(() => requestAnimationFrame(markScroll)); } catch (e) { console.error(e); view.innerHTML = `<p class="nojs">This page could not load its data. <button class="tbtn" type="button" onclick="location.reload()">Reload</button></p>`; }
     ANIM = false;
   }
   // where the tab bar rests before it sticks: the bottom of the (non-sticky) top bar. Reading the sticky bar itself

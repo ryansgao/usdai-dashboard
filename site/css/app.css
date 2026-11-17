@@ -760,3 +760,19 @@ table.checks td:nth-child(3) { width: 12%; white-space: nowrap; }
 @media (max-width: 900px) { .doc { grid-template-columns: minmax(0, 1fr); } .doc-ix { display: none; } }
 .dl-list { margin: 4px 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
 table.checks td:nth-child(3), table.checks thead th:nth-child(3) { text-align: right; }
+
+/* ---------- experiment: trading-platform interactions ---------- */
+.chart svg:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.chart .xhair .dim { pointer-events: none; }
+.chart .ghost { stroke: var(--line-strong); stroke-dasharray: 2 3; pointer-events: none; }
+.chart .meas { pointer-events: none; }
+.chart .meas .mband { fill: var(--primary); opacity: .08; }
+.chart .mlabel { font: 600 12px var(--sans); paint-order: stroke; stroke: var(--card); stroke-width: 4px; }
+.chart .mlabel.up { fill: var(--gain); } .chart .mlabel.down { fill: var(--loss); }
+.chart [data-s] { transition: opacity .15s ease; }
+.chart [data-s].faded { opacity: .12 !important; }
+.fig.reveal { opacity: 0; transform: translateY(10px); }
+.fig.reveal.in { opacity: 1; transform: none; transition: opacity .45s cubic-bezier(.2,.7,.2,1), transform .45s cubic-bezier(.2,.7,.2,1); }
+@media (prefers-reduced-motion: reduce) { .fig.reveal { opacity: 1; transform: none; } .chart [data-s] { transition: none; } }
+.hint-drag { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+@media print { .fig.reveal { opacity: 1 !important; transform: none !important; } }

@@ -106,7 +106,17 @@
     });
     (extra || []).forEach((x) => { const sp = document.createElement("span"); sp.className = "li"; const i = document.createElement("i"); i.className = x.cls; i.style.color = x.color; sp.appendChild(i); sp.appendChild(document.createTextNode(x.label)); L.appendChild(sp); });
     return L;
-  }
+  }  // hovering a legend item fades every other series in that chart
+  document.addEventListener("pointerover", (e) => {
+    const it = e.target.closest && e.target.closest(".legend button, .legend .li");
+    const ch = it && it.closest(".chart");
+    document.querySelectorAll(".chart.isolating").forEach((c) => { if (c !== ch) { c.classList.remove("isolating"); c.querySelectorAll("[data-s]").forEach((n) => n.classList.remove("faded")); } });
+    if (!ch) return;
+    const lab = it.textContent.trim();
+    ch.classList.add("isolating");
+    ch.querySelectorAll("svg [data-s]").forEach((n) => n.classList.toggle("faded", n.getAttribute("data-s") !== lab));
+  });
+
 
   let uid = 0;
   function hatchDef(svg, c, op = 0.12) {
@@ -170,7 +180,7 @@
              tipNote(r), tipDate(d), endLabel, onHover(r|null), hidden: Set, onHidden(Set), animate, aria }
      Calling it again on the same element swaps the config and redraws; the resize observer is set up once. */
   function timeChart(el, cfg0) {
-    if (el.__vc) { el.__vc.cfg = cfg0; el.__vc.hidden = new Set(cfg0.hidden || el.__vc.hidden); el.__vc.draw(cfg0.animate); return el.__vc; }
+    if (el.__vc) { el.__vc.cfg = cfg0; el.__vc.hidden = new Set(cfg0.hidden || el.__vc.hidden); el.__vc.morph = true; el.__vc.draw(cfg0.animate); return el.__vc; }
     const st = { cfg: cfg0, hidden: new Set(cfg0.hidden || []) };
     const draw = (animate) => {
       const cfg = st.cfg;
@@ -269,12 +279,20 @@
           });
         } else if (s.type === "area" || stacked[s.key]) {
           const pts = stacked[s.key] ? stacked[s.key].map((p) => ({ x: X(p.data), a: p[0], b: p[1] })) : data.filter((r) => r[s.key] != null).map((r) => ({ x: X(r), a: Math.max(0, Y.domain()[0]), b: r[s.key] }));
-          gPlot.append("path").datum(pts).attr("d", d3.area().x((p) => p.x).y0((p) => Y(p.a)).y1((p) => Y(p.b))).attr("fill", fill).attr("opacity", s.hatch ? 1 : s.opacity != null ? s.opacity : stacked[s.key] ? 0.9 : 0.12);
-          if (!stacked[s.key] || s.edge) gPlot.append("path").datum(pts).attr("d", d3.line().x((p) => p.x).y((p) => Y(p.b))).attr("fill", "none").attr("stroke", c).attr("stroke-width", s.width || 1.6).attr("stroke-linejoin", "round");
+          gPlot.append("path").attr("data-s", s.label).datum(pts).attr("d", d3.area().x((p) => p.x).y0((p) => Y(p.a)).y1((p) => Y(p.b))).attr("fill", fill).attr("opacity", s.hatch ? 1 : s.opacity != null ? s.opacity : stacked[s.key] ? 0.9 : 0.12);
+          if (!stacked[s.key] || s.edge) gPlot.append("path").attr("data-s", s.label).datum(pts).attr("d", d3.line().x((p) => p.x).y((p) => Y(p.b))).attr("fill", "none").attr("stroke", c).attr("stroke-width", s.width || 1.6).attr("stroke-linejoin", "round");
         } else {
           if (s.fill) gPlot.append("path").datum(data.filter((r) => r[s.key] != null)).attr("d", d3.area().x(X).y0(H - M.b).y1((r) => Y(r[s.key]))).attr("fill", c).attr("opacity", 0.07);
           const line = d3.line().defined((r) => r[s.key] != null).x(X).y((r) => Y(r[s.key])).curve(s.step ? d3.curveStepAfter : d3.curveLinear);
-          gPlot.append("path").datum(data).attr("d", line).attr("fill", "none").attr("stroke", c).attr("stroke-width", s.width || 1.6).attr("stroke-dasharray", s.dash ? "5 4" : null).attr("stroke-linejoin", "round");
+          // lead lines (width >= 1.75) get a soft gradient under them, the way price charts do
+          if ((s.width || 0) >= 1.75 && !s.dash) {
+            const gid = "g" + Math.random().toString(36).slice(2, 8);
+            const lg = svg.append("defs").append("linearGradient").attr("id", gid).attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", 1);
+            lg.append("stop").attr("offset", "0%").attr("stop-color", c).attr("stop-opacity", 0.18);
+            lg.append("stop").attr("offset", "100%").attr("stop-color", c).attr("stop-opacity", 0);
+            gPlot.append("path").attr("data-s", s.label).datum(data.filter((r) => r[s.key] != null)).attr("d", d3.area().x(X).y0(H - M.b).y1((r) => Y(r[s.key]))).attr("fill", `url(#${gid})`);
+          }
+          gPlot.append("path").attr("data-s", s.label).datum(data).attr("d", line).attr("fill", "none").attr("stroke", c).attr("stroke-width", s.width || 1.6).attr("stroke-dasharray", s.dash ? "5 4" : null).attr("stroke-linejoin", "round");
         }
       });
       // bars cut at the top of a clipped axis carry their value
@@ -302,6 +320,11 @@
       const xh = svg.append("g").attr("class", "xhair").style("display", "none");
       const band = xh.append("rect").attr("y", M.t).attr("height", H - M.t - M.b).attr("width", 0);
       xh.append("line").attr("y1", M.t).attr("y2", H - M.b);
+      const dim = xh.append("rect").attr("class", "dim").attr("y", M.t).attr("height", H - M.t - M.b).attr("fill", card).attr("opacity", 0.55);
+      const ghost = svg.append("line").attr("class", "ghost").attr("y1", M.t).attr("y2", H - M.b).style("display", "none");
+      const meas = svg.append("g").attr("class", "meas").style("display", "none");
+      meas.append("rect").attr("class", "mband").attr("y", M.t).attr("height", H - M.t - M.b);
+      const mlabel = meas.append("text").attr("class", "mlabel").attr("y", M.t + 14);
       const lineSeries = series.filter((s) => s.type !== "bar" && !s.noLine);
       const dots = lineSeries.map((s) => xh.append("circle").attr("r", 3.5).attr("fill", color(s.color)));
       const idxAt = (mx) => {
@@ -310,13 +333,42 @@
         return d3.bisector((r) => r._x).center(data, t);
       };
       const scale = () => el.clientWidth / W;
-      const hide = () => { xh.style("display", "none"); tip.style.opacity = 0; if (cfg.onHover) cfg.onHover(null); };
+      const hide = () => { xh.style("display", "none"); tip.style.opacity = 0; if (cfg.onHover) cfg.onHover(null); document.dispatchEvent(new CustomEvent("vc-xh", { detail: { t: null, src: el } })); };
+      // another chart's crosshair: a faint guide at the same date, if this chart covers it
+      if (st.onXh) document.removeEventListener("vc-xh", st.onXh);
+      st.onXh = (e) => {
+        if (!el.isConnected) { document.removeEventListener("vc-xh", st.onXh); return; }
+        const { t, src } = e.detail; if (src === el) return;
+        if (!t || t < x.domain()[0] || t > x.domain()[1]) { ghost.style("display", "none"); return; }
+        ghost.style("display", null).attr("x1", x(t)).attr("x2", x(t));
+      };
+      document.addEventListener("vc-xh", st.onXh);
+      // drag across the plot: the change in the lead series between the two dates
+      const lead = lineSeries[0] || series.find((s) => !s.noLine);
+      let drag = null;
+      const measure = (i0, i1) => {
+        const a = data[Math.min(i0, i1)], b = data[Math.max(i0, i1)];
+        if (!a || !b || !lead || a[lead.key] == null || b[lead.key] == null || a === b) { meas.style("display", "none"); return; }
+        const x0 = X(a), x1 = X(b), d = b[lead.key] - a[lead.key], pc = a[lead.key] ? d / Math.abs(a[lead.key]) : null;
+        const days = Math.round((b._d - a._d) / DAY);
+        meas.style("display", null).select(".mband").attr("x", x0).attr("width", Math.max(1, x1 - x0));
+        const f = lead.fmt || yF;
+        // a series already in percent (a yield) changes by points, not by a percent of itself
+        const isPct = /%$/.test(f(b[lead.key]));
+        const txt = isPct ? `${d >= 0 ? "+" : MINUS}${Math.abs(d * 100).toFixed(2)} points over ${days} days`
+          : `${d >= 0 ? "+" : MINUS}${f(Math.abs(d)).replace(/^[−-]/, "")}${pc != null && isFinite(pc) ? `  (${pc >= 0 ? "+" : MINUS}${Math.abs(pc * 100).toFixed(1)}%)` : ""}  over ${days} days`;
+        mlabel.attr("x", Math.min(Math.max(x0 + 6, M.l + 4), W - M.r - 220)).text(txt)
+          .attr("class", "mlabel " + (d >= 0 ? "up" : "down"));
+      };
       const show = (ev, touch) => {
         const [mx, my] = d3.pointer(ev, svg.node());
         const i = idxAt(mx), r = data[i];
         if (!r) return;
         const px = X(r);
         xh.style("display", null).select("line").attr("x1", px).attr("x2", px).style("display", bars ? "none" : null);
+        dim.attr("x", px).attr("width", bars ? 0 : Math.max(0, W - M.r - px));
+        document.dispatchEvent(new CustomEvent("vc-xh", { detail: { t: r._x, src: el } }));
+        st.lastI = i;
         if (bars) { const g = bx(r); band.attr("x", g.x - 2).attr("width", g.w + 4); } else band.attr("width", 0);
         lineSeries.forEach((s, k) => {
           const v = stacked[s.key] ? stacked[s.key][i][1] : r[s.key];
@@ -348,10 +400,22 @@
       const tState = { el, hide };
       const arm = () => { clearTimeout(idle); idle = setTimeout(() => { hide(); openTips.delete(tState); }, 4000); };
       svg.append("rect").attr("class", "ov").attr("x", M.l).attr("y", M.t).attr("width", W - M.l - M.r).attr("height", H - M.t - M.b).attr("fill", "transparent")
-        .on("pointerdown", (ev) => { if (ev.pointerType !== "mouse") { down = true; openTips.add(tState); show(ev, true); arm(); } })
-        .on("pointermove", (ev) => { if (ev.pointerType === "mouse") return show(ev, false); if (down) { show(ev, true); arm(); } })
-        .on("pointerup pointercancel", (ev) => { if (ev.pointerType !== "mouse") { down = false; arm(); } })
-        .on("pointerleave", (ev) => { if (ev.pointerType === "mouse") hide(); });
+        .on("pointerdown", (ev) => { if (ev.pointerType !== "mouse") { down = true; openTips.add(tState); show(ev, true); arm(); return; } const [mx] = d3.pointer(ev, svg.node()); drag = { i0: idxAt(mx) }; meas.style("display", "none"); })
+        .on("pointermove", (ev) => { if (ev.pointerType === "mouse") { show(ev, false); if (drag && ev.buttons) { const [mx] = d3.pointer(ev, svg.node()); measure(drag.i0, idxAt(mx)); } return; } if (down) { show(ev, true); arm(); } })
+        .on("pointerup pointercancel", (ev) => { if (ev.pointerType !== "mouse") { down = false; arm(); return; } drag = null; })
+        .on("pointerleave", (ev) => { if (ev.pointerType === "mouse") { hide(); drag = null; } })
+        .on("dblclick", () => meas.style("display", "none"));
+      // keyboard: focus the chart, arrows step through the points, Escape clears
+      svg.attr("tabindex", 0).attr("aria-keyshortcuts", "ArrowLeft ArrowRight Escape").on("mousedown", (ev) => ev.preventDefault()).on("keydown", (ev) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(ev.key)) return;
+        ev.preventDefault();
+        if (ev.key === "Escape") return hide();
+        let i = st.lastI == null ? data.length - 1 : st.lastI;
+        i = ev.key === "Home" ? 0 : ev.key === "End" ? data.length - 1 : Math.max(0, Math.min(data.length - 1, i + (ev.key === "ArrowRight" ? 1 : -1)));
+        const r = data[i]; const px = X(r);
+        const fake = { clientX: svg.node().getBoundingClientRect().left + px * scale(), clientY: svg.node().getBoundingClientRect().top + (M.t + 30) * scale() };
+        show(fake, false);
+      });
 
       let gEv = null;
       if (!hasEv && cfg.eventList) { cfg.eventList.innerHTML = ""; const we = cfg.eventList.closest(".with-events"); if (we) we.classList.add("noev"); }
@@ -361,6 +425,8 @@
         const extra = anyPart ? [{ cls: "part", color: css("--faint"), label: cfg.partLabel || "In progress" }] : [];
         el.appendChild(legend(visualStackOrder(all, cfg.data), st.hidden, shownSeries.length > 1 ? (k) => { st.hidden.has(k) ? st.hidden.delete(k) : st.hidden.add(k); if (cfg.onHidden) cfg.onHidden(new Set(st.hidden)); draw(false); } : null, extra));
       }
+      if (st.morph && !animate && !reduced()) { gPlot.style("opacity", 0.15).transition().duration(260).ease(d3.easeCubicOut).style("opacity", 1); }
+      st.morph = false;
       if (animate) { if (gEv) gEv.raise(); wipe(el, svg, gPlot, M.l - 4, W - M.l - M.r + 8, H); if (gEv) { gEv.style("opacity", 0).transition().delay(450).duration(250).style("opacity", 1); } }
     };
     st.draw = draw; el.__vc = st;
