@@ -760,7 +760,7 @@
     const rows = BOR.filter((b) => b.live > 0);
     const el = staticFig({ slug: "borrowers", span: 6, title: `Three obligors hold ${pct(K.top3_committed_share)} of the money lent or committed`, sub: "Vault principal outstanding by borrower, with the escrow facility as its own obligor", basis: "onchain", conf: "high", src: "Loan Router v1 and v2 originations less principal repaid", body: box,
       menu: csvMenu("borrowers", BOR) });
-    requestAnimationFrame(() => VC.hbars(box, { rows: rows.slice(0, 8).map((b) => ({ label: b.name || (/^0x64447901/i.test(b.addr) ? "Not named (via 0x6444)" : "Not named " + short(b.addr)), value: b.live, color: b.escrow ? "--c-staked" : "--c-diem", note: b.inferred ? "$128.9M in escrow; matched to HIVE Digital's filings by size, 9% rate, GB200 hardware and BC site (lender not named there)" : `${b.n} loan${b.n > 1 ? "s" : ""}, ${M$(b.lent)} lent in all${b.addr ? ", " + short(b.addr) : ""}` })), fmt: F.usd, labelW: 150 }));
+    requestAnimationFrame(() => VC.hbars(box, { rows: rows.slice(0, 8).map((b) => ({ label: b.name || (/^0x64447901/i.test(b.addr) ? "Unnamed, via 0x6444" : "Unnamed " + short(b.addr)), value: b.live, color: b.escrow ? "--c-staked" : "--c-diem", note: b.inferred ? "$128.9M in escrow; matched to HIVE Digital's filings by size, 9% rate, GB200 hardware and BC site (lender not named there)" : `${b.n} loan${b.n > 1 ? "s" : ""}, ${M$(b.lent)} lent in all${b.addr ? ", " + short(b.addr) : ""}` })), fmt: F.usd, labelW: 150 }));
     return el;
   }
   function origChart() {
@@ -1132,8 +1132,20 @@
     parts.forEach((p) => {
       (wide && (p.id === "m-contracts" || p.id === "m-downloads") ? rail : main).appendChild(p);
       const t = p.querySelector("h2").textContent;
-      const li = h(`<li><a href="#${p.id}" data-sec="${p.id}">${esc(t)}</a></li>`); ol.appendChild(li);
+      if (!(wide && (p.id === "m-contracts" || p.id === "m-downloads"))) ol.appendChild(h(`<li><a href="#${p.id}" data-sec="${p.id}">${esc(t)}</a></li>`));
     });
+    // the section under the sticky tabs is marked current, Venice's Allium-style purple bar (css .doc-ix a[aria-current])
+    const markDoc = () => {
+      if (!ol.isConnected) return window.removeEventListener("scroll", markDoc);
+      const line = $("#tabs").getBoundingClientRect().bottom + 24;
+      const links = [...ol.querySelectorAll("a[data-sec]")].filter((a) => { const t = document.getElementById(a.dataset.sec); return t && t.closest(".doc-body"); });
+      let cur = links[0];
+      links.forEach((a) => { if (document.getElementById(a.dataset.sec).getBoundingClientRect().top <= line) cur = a; });
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = links[links.length - 1];
+      ol.querySelectorAll("a").forEach((a) => (a === cur ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current")));
+    };
+    window.addEventListener("scroll", markDoc, { passive: true });
+    requestAnimationFrame(markDoc);
     ol.addEventListener("click", (e) => { const l = e.target.closest("a[data-sec]"); if (!l) return; e.preventDefault(); document.getElementById(l.dataset.sec).scrollIntoView({ block: "start", behavior: "smooth" }); });
     view.appendChild(doc);
   };

@@ -320,7 +320,7 @@
       const xh = svg.append("g").attr("class", "xhair").style("display", "none");
       const band = xh.append("rect").attr("y", M.t).attr("height", H - M.t - M.b).attr("width", 0);
       xh.append("line").attr("y1", M.t).attr("y2", H - M.b);
-      const dim = xh.append("rect").attr("class", "dim").attr("y", M.t).attr("height", H - M.t - M.b).attr("fill", card).attr("opacity", 0.55);
+      const dim = xh.append("rect").attr("class", "dim").attr("y", M.t).attr("height", H - M.t - M.b).attr("fill", card).attr("opacity", 0.3);
       const ghost = svg.append("line").attr("class", "ghost").attr("y1", M.t).attr("y2", H - M.b).style("display", "none");
       const meas = svg.append("g").attr("class", "meas").style("display", "none");
       meas.append("rect").attr("class", "mband").attr("y", M.t).attr("height", H - M.t - M.b);
@@ -625,9 +625,13 @@
   function hbars(el, cfg) {
     const draw = () => {
       el.innerHTML = ""; el.classList.add("chart");
-      const W = el.clientWidth || 600, rowH = 30, lab = cfg.labelW || Math.min(150, W * 0.36);
+      const W = el.clientWidth || 600, rowH = 30;
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = "500 13px Manrope, sans-serif"; const tw = d3.max(cfg.rows, (r) => ctx.measureText(r.label).width) || 60;
+      ctx.font = "600 12px Manrope, sans-serif"; const vw = d3.max(cfg.rows, (r) => ctx.measureText((cfg.fmt || F.num)(r.value)).width) || 40;
+      const lab = Math.min(Math.max(tw + 22, 80), W * 0.45);   // 12px inset from the card edge + 10px before the bar
       const H = cfg.rows.length * rowH + 4;
-      const x = d3.scaleLinear().domain([0, cfg.max || d3.max(cfg.rows, (r) => r.value)]).range([lab, W - 56]);
+      const x = d3.scaleLinear().domain([0, cfg.max || d3.max(cfg.rows, (r) => r.value)]).range([lab, W - vw - 14]);
       const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("height", H).attr("role", "img").attr("aria-label", cfg.aria || "Bar chart");
       const tip = tipFor(el);
       cfg.rows.forEach((r, i) => {
