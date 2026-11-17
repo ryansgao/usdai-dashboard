@@ -27,11 +27,11 @@ def sheet(name, rows):
         return
     w = wb.create_sheet(name)
     keys = list(dict.fromkeys(k for r in rows for k in r if not k.startswith("_")))
-    w.append(keys)
+    w.append([{"d": "date", "m": "month"}.get(k, k) for k in keys])
     for c in w[1]:
         c.font = Font(bold=True)
     for r in rows:
-        w.append([json.dumps(r.get(k)) if isinstance(r.get(k), (list, dict)) else r.get(k) for k in keys])
+        w.append([json.dumps(r.get(k)) if isinstance(r.get(k), (list, dict)) else (round(r[k], 6) if isinstance(r.get(k), float) else r.get(k)) for k in keys])
     w.freeze_panes = "A2"
 
 sheet("Daily", d["daily"]); sheet("Monthly", d["monthly"])

@@ -446,7 +446,8 @@ for i, r in enumerate(rows):
     win = rows[max(0, i - 29): i + 1]
     f30 = sum((w["revenue"] or 0) for w in win if w["d"] not in orig_days)
     r["fee_30d"] = r2(f30, 0) if len(win) == 30 else None
-    r["mcap_years_fee"] = r2(r["chip_mcap"] / (f30 * 12), 2) if r["chip_mcap"] and f30 > 0 and len(win) == 30 else None
+    # a gap, not a zero, where the market cap or a full 30-day fee window is missing
+    r["mcap_years_fee"] = r2(r["chip_mcap"] / (f30 * 12), 2) if (r["chip_mcap"] or 0) > 1e6 and f30 > 1000 and len(win) == 30 else None
 
 # ---------------------------------------------------------------- monthly table
 mon = []
