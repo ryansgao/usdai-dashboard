@@ -740,3 +740,23 @@ table.t th .sub-n { display: block; font-size: 12px; font-weight: 400; color: va
   table.loans td, table.peers td { white-space: normal; }
   table.loans td.nowrap { white-space: nowrap; font-size: 13px; }
 }
+
+/* ---------- layout fixes (Ryan's four, 2026-11-17) ---------- */
+.ov-where { margin: 20px 0 0; }
+.ov-where .ow-h { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.ov-where .lg-t { display: flex; flex-wrap: wrap; gap: 6px 28px; }
+.stackcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; grid-row: span 3; }
+.stackcol > .fig { display: block; margin-bottom: 0; }
+.stackcol > .fig > .card { display: block; }
+@media (max-width: 1199px) { .stackcol { grid-column: span 12; } }
+table.t.tight td { padding-top: 7px; padding-bottom: 7px; }
+table.t .hl1 { color: var(--fg); }
+table.t .mono-s { font-size: 12px; margin-left: 6px; }
+table.checks th:first-child { width: 58%; }
+table.checks td:nth-child(2) { width: 30%; }
+table.checks td:nth-child(3) { width: 12%; white-space: nowrap; }
+.doc .mdoc { max-width: none; }
+.doc .defs dd { max-width: 76ch; }
+@media (max-width: 900px) { .doc { grid-template-columns: minmax(0, 1fr); } .doc-ix { display: none; } }
+.dl-list { margin: 4px 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+table.checks td:nth-child(3), table.checks thead th:nth-child(3) { text-align: right; }

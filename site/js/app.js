@@ -549,7 +549,7 @@
       ["CHIP fully diluted", "Price × 10B CHIP", M$(K.chip_fdv), arrow(chg30)],
     ];
     view.appendChild(h(`<section class="intro ov"><div class="ov-top">
-      <div class="ov-lead"><div class="lede"><p class="thesis">${W.thesis()}</p></div>
+      <div class="ov-lead"><div class="lede"><p class="thesis">${W.thesis()}</p></div><div class="ov-where"><div class="ow-h">Where sUSDai's ${M$(K.vault_nav, 0)} sits today</div><div class="ow-bar"></div></div>
         <div class="tiles">${tiles.map(([l, v, d]) => `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("")}</div></div>
       <div class="ov-side"><div class="kvcard"><table class="kv"><tbody>${kv.map(([l, def, v, d]) => `<tr><td><span class="lab">${l}</span><span class="def">${def}</span></td><td class="v">${v}</td><td class="d">${d}</td></tr>`).join("")}</tbody></table>
         <p class="kv-note">Changes over 30 days. USDai, PYUSD and USDC are counted at $1.</p></div></div></div>
@@ -557,6 +557,12 @@
       <div><h3>The loans are few and large</h3><p>${W.loansRead()}</p></div>
       <div><h3>Money leaves once a month, in bulk</h3><p>${W.exitRead()}</p></div>
       <div><h3>The fee is small next to the unlock</h3><p>USD.AI Inc. bought $1.0M of CHIP with its own money (announced Oct 26) and on Oct 28 proposed that the 10% fee buy more. ${W.chipRead()}</p></div></div></section>`));
+    requestAnimationFrame(() => { const el = view.querySelector(".ow-bar"); if (el) VC.stackBar(el, { parts: [
+      { label: "Live loans", value: K.vault_loans || 0, color: "--c-diem", note: "Principal outstanding on loans the vault holds" },
+      { label: "Escrow", value: K.vault_escrow || 0, color: "--c-staked", note: "Funded loans waiting on servers to go live" },
+      { label: "Cash", value: K.vault_cash || 0, color: "--c-float", note: "USDai in the vault, for redemptions and new loans" },
+      { label: "Accrued", value: Math.max(0, (K.vault_nav || 0) - (K.vault_loans || 0) - (K.vault_escrow || 0) - (K.vault_cash || 0)), color: "--c-other", note: "Interest and reserve yield not yet collected" },
+    ], fmt: F.usd }); });
     view.appendChild(band(["Where the money is", "sUSDai's assets, split into what is lent and what is not, with the six dates that moved them."], grid(assetsChart(true))));
     view.appendChild(grid(incomeChart(6), borrowerChart()));
     const box = h('<div class="diagram"></div>');
@@ -887,8 +893,8 @@
       [["Price", chipP(K.chip_price), "Close, " + dayOf(AS_OF)], ["Circulating", bn(K.chip_circ), "of 10B CHIP"], ["Highest close", chipP(K.chip_ath_close), dayOf(K.chip_ath_close_date) + "; intraday high " + chipP(K.chip_ath)]]));
     view.appendChild(grid(chipChart()));
     view.appendChild(band(["Buybacks against unlocks", "What the 10% fee can buy, against the CHIP that becomes sellable."], grid(unlockChart(), buybackFacts()), grid(calcBuyback())));
-    view.appendChild(band(["Who holds CHIP", "A labelled snapshot of every large wallet on Arbitrum."], grid(holdersSplit()), grid(holdersTable(), stakedChart())));
-    view.appendChild(band(["Trading", "How much CHIP changes hands, and where it sits on exchanges."], grid(volumeChart(), holdersFacts())));
+    view.appendChild(band(["Who holds CHIP", "A labelled snapshot of every large wallet on Arbitrum."], grid(holdersSplit()), grid(holdersTable(), stackCol(5, holdersFacts(), stakedChart()))));
+    view.appendChild(band(["Trading", "How much CHIP changes hands, and where it sits on exchanges."], grid(volumeChart(12))));
   };
   function chipChart() {
     const rows = rowsWith("chip_price");
@@ -977,25 +983,31 @@
     return el;
   }
   function holdersTable() {
-    const body = HOLD.top.map(([a, m, l], i) => `<tr><td class="r muted">${i + 1}</td><td>${esc(l)}<span class="sub-n">${esc(a)}</span></td><td class="r bar-cell"><span class="bar" style="width:${(m / HOLD.top[0][1]) * 90}px"></span><span>${m >= 1000 ? (m / 1000).toFixed(2) + "B" : m.toFixed(1) + "M"}</span></td><td class="r">${pct(m / 10000, 1)}</td></tr>`).join("");
+    const body = HOLD.top.map(([a, m, l], i) => `<tr><td class="r muted">${i + 1}</td><td><span class="hl1">${esc(l)}</span> <span class="muted mono-s">${esc(a)}</span></td><td class="r bar-cell"><span class="bar" style="width:${(m / HOLD.top[0][1]) * 90}px"></span><span>${m >= 1000 ? (m / 1000).toFixed(2) + "B" : m.toFixed(1) + "M"}</span></td><td class="r">${pct(m / 10000, 1)}</td></tr>`).join("");
     return staticFig({ slug: "chip-top", span: 7, title: "The ten largest wallets hold 72% of supply, all insiders or the Foundation", sub: "Largest CHIP holders on Arbitrum, labelled", basis: "onchain", conf: "medium", src: `Arbiscan, Blockscout; labels from Binance Research and transfer history, ${dayOf(HOLD.as_of)}`,
       menu: csvMenu("chip_top_holders", HOLD.top.map(([a, m, l]) => ({ address: a, chip_m: m, label: l }))),
-      body: `<div class="tw"><table class="t"><thead><tr><th class="r">#</th><th>Holder</th><th class="r">CHIP</th><th class="r">Of supply</th></tr></thead><tbody>${body}</tbody></table></div>` });
+      body: `<div class="tw"><table class="t tight"><thead><tr><th class="r">#</th><th>Holder</th><th class="r">CHIP</th><th class="r">Of supply</th></tr></thead><tbody>${body}</tbody></table></div>` });
+  }
+  // two cards stacked in one column of the 12-column grid, so a tall card beside them leaves no empty band
+  function stackCol(span, ...figs) {
+    const c = h(`<div class="stackcol s${span}"></div>`);
+    figs.forEach((f) => f && c.appendChild(f));
+    return c;
   }
   function holdersFacts() {
     const rows = [["Holders on Arbitrum", F.int(HOLD.holders_arbitrum), "Addresses with any CHIP"], ["Holders on Ethereum", F.int(HOLD.holders_ethereum), "Bridged CHIP"], ["Exchange wallets", "≥ 750M", "Binance 287M, Bybit 134M, Upbit 129M, Robinhood 96M, OKX 62M and smaller venues"], ["Season 2 unclaimed", "98.4M", "Claimable until Jan 31, 2027"], ["Buyback Safe", "22.3M", "Has not moved or voted since Oct 26"]];
-    return staticFig({ slug: "chip-holder-facts", span: 4, title: "Holders in numbers", sub: dayOf(HOLD.as_of) + " snapshot", basis: "onchain", src: "Arbiscan, Blockscout",
+    return staticFig({ slug: "chip-holder-facts", span: 12, title: "Holders in numbers", sub: dayOf(HOLD.as_of) + " snapshot", basis: "onchain", src: "Arbiscan, Blockscout",
       body: `<table class="kv" style="margin:4px 0"><tbody>${rows.map(([l, v, d]) => `<tr><td><span class="lab">${l}</span><span class="def">${d}</span></td><td class="v">${v}</td></tr>`).join("")}</tbody></table>` });
   }
-  function volumeChart() {
+  function volumeChart(span) {
     const rows = rowsWith("chip_vol");
-    return chartFig({ slug: "chip-volume", span: 8, title: (() => { const a = rowsWith("chip_vol"); const mx = d3.max(a, (x) => x.chip_vol), last30 = d3.mean(a.slice(-30), (x) => x.chip_vol); return `Daily volume is down from ${M$(mx)} at launch to about ${M$(last30)}`; })(), sub: "CHIP traded per day across venues, USD; the title's recent figure is the 30-day average", basis: "thirdparty", src: "CoinGecko",
+    return chartFig({ slug: "chip-volume", span: 12, title: (() => { const a = rowsWith("chip_vol"); const mx = d3.max(a, (x) => x.chip_vol), last30 = d3.mean(a.slice(-30), (x) => x.chip_vol); return `Daily volume is down from ${M$(mx)} at launch to about ${M$(last30)}`; })(), sub: "CHIP traded per day across venues, USD; the title's recent figure is the 30-day average", basis: "thirdparty", src: "CoinGecko",
       csvCols: ["chip_vol"], time: { rows, key: "d", def: "All", agg: { chip_vol: "sum" }, bars: true } },
       (r) => ({ data: r, height: 240, series: [{ key: "chip_vol", label: "Volume", color: "--c-lead", type: "bar", fmt: F.usd }], yFormat: F.usdAx }));
   }
   function stakedChart() {
     const rows = rowsWith("schip_staked").filter((r) => r.d >= "2026-04-15");
-    return chartFig({ slug: "schip", span: 5, title: `${C(K.schip_staked_now)} CHIP is staked, ${pct((K.schip_staked_now || 0) / 1e10, 2)} of supply`, sub: "CHIP in the sCHIP contract: a 1:1 wrapper with no lock, no slashing and no yield. It peaked at 55.5M on Sep 23 and fell when Season 3 stopped paying points on it", basis: "onchain", conf: "high", src: "sCHIP Deposit and Withdraw events on Arbitrum",
+    return chartFig({ slug: "schip", span: 12, title: `${C(K.schip_staked_now)} CHIP is staked, ${pct((K.schip_staked_now || 0) / 1e10, 2)} of supply`, sub: "CHIP in the sCHIP contract: a 1:1 wrapper with no lock, no slashing and no yield. It peaked at 55.5M on Sep 23 and fell when Season 3 stopped paying points on it", basis: "onchain", conf: "high", src: "sCHIP Deposit and Withdraw events on Arbitrum",
       csvCols: ["schip_staked"], time: { rows, key: "d", def: "All", agg: { schip_staked: "last" } } },
       (r) => ({ data: r, height: 240, yMin: 0, series: [{ key: "schip_staked", label: "CHIP staked", color: "--c-lead", type: "area", fmt: (v) => C(v) + " CHIP" }], yFormat: (v) => C(v) }));
   }
@@ -1073,30 +1085,42 @@
       ["sUSDai shares", ((K.susdai_supply || 0) / 1e6).toFixed(2) + "M", "totalShares()", ((K.vault_shares || 0) / 1e6).toFixed(2) + "M", ok(K.vault_shares) ? pct(Math.abs(K.susdai_supply / K.vault_shares - 1), 2) : "–"],
       ["Lent or in escrow (DefiLlama)", M$(K.lent, 2), "Vault loans + escrow", M$(lentNow, 2), lentNow ? pct(Math.abs(K.lent / lentNow - 1), 2) : "–"],
     ];
-    view.appendChild(sec("m-checks", "Checking against the contracts", `<div class="tw"><table class="t"><thead><tr><th>Our figure</th><th class="r">Value</th><th>Contract says</th><th class="r">Value</th><th class="r">Gap</th></tr></thead><tbody>${checks.map((c) => `<tr><td>${c[0]}</td><td class="r">${c[1]}</td><td>${c[2]}</td><td class="r">${c[3]}</td><td class="r">${c[4]}</td></tr>`).join("")}</tbody></table></div><p class="note">Contract read at block ${RPC.block || "–"}, ${timeUTC(RPC.read_utc)} UTC. The build fails if a gap exceeds 1%.</p>`));
-    view.appendChild(sec("m-sources", "Sources", `<dl class="defs">
+    const parts = [];
+    parts.push(sec("m-checks", "Checking against the contracts", `<div class="tw"><table class="t"><thead><tr><th>Our figure</th><th class="r">Value</th><th>Contract says</th><th class="r">Value</th><th class="r">Gap</th></tr></thead><tbody>${checks.map((c) => `<tr><td>${c[0]}</td><td class="r">${c[1]}</td><td>${c[2]}</td><td class="r">${c[3]}</td><td class="r">${c[4]}</td></tr>`).join("")}</tbody></table></div><p class="note">Contract read at block ${RPC.block || "–"}, ${timeUTC(RPC.read_utc)} UTC. The build fails if a gap exceeds 1%.</p>`));
+    parts.push(sec("m-sources", "Sources", `<dl class="defs">
       <dt>Arbitrum event logs</dt><dd>sUSDai deposits, redemption requests and payouts, reserve-yield deposits with the admin fee, escrow, donations; Loan Router v1 and v2 originations, repayments and refinances; CHIP and sCHIP. Pulled with Envio HyperSync, decoded with the contracts' verified ABIs (Sourcify).</dd>
       <dt>Live contract reads</dt><dd>The vault's assets, cash, loans, escrow, share prices and queue, read through a public Arbitrum RPC.</dd>
       <dt>DefiLlama</dt><dd>Loans outstanding ("borrowed") history, fees and revenue, Pendle's PT-sUSDai pool, peer protocols.</dd>
       <dt>CoinGecko</dt><dd>CHIP and BTC prices, market caps and volumes; peer token prices.</dd>
       <dt>USD.AI</dt><dd>Docs and blog for rules and events (the 10% fee, the 7% hurdle, the buyback, GLX). Their own figures are marked "reported".</dd></dl>`));
-    view.appendChild(sec("m-defs", "Definitions", `<dl class="defs">
+    parts.push(sec("m-defs", "Definitions", `<dl class="defs">
       <dt>sUSDai assets</dt><dd>Shares issued by deposits less shares redeemed, times the deposit share price.</dd>
-      <dt>Holder yield, 30 days</dt><dd>The change in the deposit share price over 30 days, annualized without compounding, after the 10% fee. "Without the top-up" removes the Nov 1 donation's step from the price.</dd>
+      <dt>Holder yield, 30 days</dt><dd>The change in the deposit share price over 30 days, annualized without compounding, after the 10% fee. "Organic" removes the whole Nov 1 step from the price: the Foundation's top-up and the value redeemers left behind.</dd>
       <dt>Protocol fee</dt><dd>10% of sUSDai yield. Last 30 days: DefiLlama's revenue with the days of loan-origination fees removed. Twelve months: the admin fee recorded on each reserve-yield deposit plus one ninth of the loan and escrow interest the vault received.</dd>
       <dt>Loan amounts</dt><dd>v1 loans were made in PYUSD or USDC (6 decimals), v2 loans in USDai (18); the events do not name the token, so amounts are scaled by size. Two test loans ($5, $1) are left out.</dd>
       <dt>Loan Router v2</dt><dd>0x1c2e…e12f is not in USD.AI's published address list. The 17 loans still open on v1 moved to it between June 26 and July 3, 2026; payments before and after the move are added together.</dd>
       <dt>Loan payoff</dt><dd>A loan whose whole principal comes back on one day is shown separately; only the Duos Edge AI loan (Oct 1, 2026) qualifies. USD.AI presented it as a GLX sale; filings by Duos and Axe Compute show the borrower's buyer repaid it.</dd>
       <dt>Borrower names</dt><dd>Matched to SEC filings, the Proof of Loans attestation (Jul 15, 2026) and USD.AI's posts by exact amount, hardware and site. The $128.9M escrow facility matches HIVE Digital's filings by size, rate (9% is what HIVE will pay once the loan is live; the vault earns 6.5% while it sits in escrow), hardware and site; the lender is not named there, so that match is inferred.</dd>
       <dt>Unlocks</dt><dd>Modeled from the docs' tokenomics images: investors (29.6%), contributors (23.1%) and the Foundation reserve (19.8%) unlock 33% after a 12-month cliff from the April 21, 2026 launch, then monthly over 24 months. Our earlier figure of 1.75B left the reserve out; an X thread's 2.76B adds ecosystem emissions.</dd></dl>`));
-    view.appendChild(sec("m-limits", "What we could not measure", `<ul>
+    parts.push(sec("m-limits", "What we could not measure", `<ul>
       <li>Names for the loans not matched to a filing or post (about $33M of live principal). One v1 address, 0x6444…d39d, took loans for three different borrowers: it is an intermediary, not a borrower.</li>
       <li>Loans sold to other lenders through GLX, and anything off-chain: insurance, the borrowers' companies, escrow accounts.</li>
       <li>sUSDai and CHIP holdings on Ethereum, Base, Plasma and Solana, beyond the bridged share count.</li>
       <li>Which of the largest redeemers are lending markets or vaults rather than end holders.</li></ul>`));
     const sql = (window.USDAI_SQL || []).map((q) => `<details class="sqlq"><summary><b>${esc(q.title)}</b> <span class="muted">${esc(q.name)}</span></summary><div class="sqlwrap">${copyBtn(q.sql, q.name)}<pre><code>${esc(q.sql)}</code></pre></div></details>`).join("");
-    if (sql) view.appendChild(sec("m-sql", "Run it in Allium", `<p class="note">Snowflake SQL against Allium's Arbitrum tables. Drafts: not yet run inside Allium; column names may need a check.</p>${sql}`));
-    view.appendChild(sec("m-contracts", "Contracts (Arbitrum)", `<div class="tw"><table class="t"><tbody>${contracts}</tbody></table></div>`));
+    if (sql) parts.push(sec("m-sql", "Run it in Allium", `<p class="note">Snowflake SQL against Allium's Arbitrum tables. Drafts: not yet run inside Allium; column names may need a check.</p>${sql}`));
+    parts.push(sec("m-contracts", "Contracts (Arbitrum)", `<div class="tw"><table class="t"><tbody>${contracts}</tbody></table></div>`));
+    parts.push(sec("m-downloads", "Downloads", `<ul class="dl-list"><li><a href="downloads/usdai-deep-dive-data.xlsx" download>Workbook, every table (.xlsx)</a></li><li><a href="downloads/usdai_daily.csv" download>Daily table (.csv)</a></li><li><a href="downloads/usdai_monthly.csv" download>Monthly table (.csv)</a></li><li><a href="downloads/usdai_loans.csv" download>Loans (.csv)</a></li></ul><p class="note">Every chart's menu also downloads its own CSV and PNG.</p>`));
+    const doc = h(`<div class="doc"><nav class="doc-ix" aria-label="On this page"><p>On this page</p><ol></ol></nav><div class="doc-body"></div><aside class="doc-rail"></aside></div>`);
+    const ol = doc.querySelector("ol"), main = doc.querySelector(".doc-body"), rail = doc.querySelector(".doc-rail");
+    const wide = window.matchMedia("(min-width: 1500px)").matches;
+    parts.forEach((p) => {
+      (wide && (p.id === "m-contracts" || p.id === "m-downloads") ? rail : main).appendChild(p);
+      const t = p.querySelector("h2").textContent;
+      const li = h(`<li><a href="#${p.id}" data-sec="${p.id}">${esc(t)}</a></li>`); ol.appendChild(li);
+    });
+    ol.addEventListener("click", (e) => { const l = e.target.closest("a[data-sec]"); if (!l) return; e.preventDefault(); document.getElementById(l.dataset.sec).scrollIntoView({ block: "start", behavior: "smooth" }); });
+    view.appendChild(doc);
   };
 
   // first render: no slide, charts draw in as they come into view
