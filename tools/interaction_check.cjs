@@ -19,7 +19,7 @@ const { chromium } = require('playwright');
   await p.mouse.up();
   const leg = await p.$('#yield .legend button'); await leg.hover(); await p.waitForTimeout(250);
   r.faded = await p.$$eval('#yield svg [data-s].faded', (ns) => ns.length);
-  await p.focus('#yield svg'); await p.keyboard.press('End'); await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(100);
+  await p.focus('#yield .chart svg[tabindex]'); await p.keyboard.press('End'); await p.keyboard.press('ArrowLeft'); await p.waitForTimeout(100);
   r.keyTip = await p.$eval('#yield .tip', (n) => n.style.opacity);
   await p.screenshot({ path: out + '/legend.png', clip: { x: bb.x - 60, y: bb.y - 120, width: bb.width + 80, height: bb.height + 220 } });
   console.log(JSON.stringify({ ...r, errs }));
