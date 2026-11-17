@@ -103,7 +103,13 @@ for r in S:
         depositors[d[:7]].add(r["owner"])
         dep_by_owner[r["owner"]] += a
     elif ev == "Transfer":
-        pass   # mint/burn here includes OFT bridging (burned on Arbitrum, minted elsewhere): not used for supply
+        # mint/burn on Arbitrum includes OFT bridging (burned here, minted on another chain), so it tracks the
+        # Arbitrum share count; total shares come from deposits less redemptions
+        v = r["value"] / 1e18
+        if r["from"] == ZERO:
+            add(d, "arb_mint", v)
+        if r["to"] == ZERO:
+            add(d, "arb_burn", v)
     elif ev == "RedeemRequest":
         req_by_id[r["requestId"]] = r
         add(d, "redeem_req_shares", r["shares"] / 1e18)
@@ -376,7 +382,7 @@ first = min([d for d in price_by_day] + [d for d in tvl if tvl[d] > 0])
 d0 = dt.date.fromisoformat(first)
 rows = []
 price = None
-sup = usdai = schip = qsh = don_ps = 0.0
+sup = usdai = schip = qsh = don_ps = arb = 0.0
 prev_price, recent_steps = None, []
 cur = d0
 while cur.isoformat() <= AS_OF:
@@ -387,6 +393,7 @@ while cur.isoformat() <= AS_OF:
     schip += schip_delta.get(d, 0.0)
     x = daily.get(d, {})
     qsh += x.get("q_in", 0.0) - x.get("q_out", 0.0)
+    arb += x.get("arb_mint", 0.0) - x.get("arb_burn", 0.0)
     if x.get("donation") and price and prev_price:
         # the payout day's whole step above a normal day: the top-up plus value left behind by redeemers
         normal = sorted(recent_steps)[len(recent_steps) // 2] if recent_steps else 0.0
@@ -408,7 +415,8 @@ while cur.isoformat() <= AS_OF:
            "chip_holders": chip_holders_by_day.get(d), "chip_transfers": chip_xfer_by_day.get(d) if CH else None,
            "schip_staked": r2(schip, 0) if SC else None,
            "queue_usd": r2(max(0.0, qsh) * (price or 1), 0), "price_ex_topup": r2(price - don_ps, 6) if price else None,
-           "hurdle": 0.07 if d >= "2026-10-15" else None}
+           "hurdle": 0.07 if d >= "2026-10-15" else None,
+           "shares_arbitrum": r2(arb, 0), "shares_bridged": r2(max(0.0, sup - arb), 0)}
     rows.append(row)
     cur += dt.timedelta(days=1)
 # fill forward holder counts across days without transfers
@@ -620,6 +628,8 @@ for i in range(30):
                   "cum_usd": r2(cum_chip * price_now, 0) if price_now else None, "cum_fee": r2(cum_fee, 0),
                   "fee_chip": r2(cum_fee / price_now, 0) if price_now else None})
 kpi["s2_airdrop"] = S2
+# gross yield split from the USD.AI app (toplineMetrics, read 2026-11-16 20:40 UTC; research/protocol-and-loans.md §4.1)
+kpi["gross_split"] = {"as_of": "2026-11-16", "total": 0.0802, "loans": 0.0452, "escrow": 0.019, "pyusd": 0.016}
 
 # borrowers, largest live principal first
 borrower_rows = sorted(({"addr": a_ if a_.startswith("0x") else "", "name": b_.get("name"), "live": r2(b_["live"], 0), "lent": r2(b_["lent"], 0), "n": b_["n"],
@@ -703,7 +713,7 @@ EVENTS = [
     ("2026-01-27", "Foundation and CHIP announced", "usd.ai blog"),
     ("2026-03-07", "$136M redeemed in one payout", "On-chain, RedemptionsServiced"),
     ("2026-04-21", "CHIP starts trading", "CoinGecko first price; usd.ai \"$CHIP Is Live\", Apr 22"),
-    ("2026-06-04", "$98.1M Duos Edge AI loan funded", "usd.ai; DefiLlama fee spike"),
+    ("2026-06-04", "$87.1M Duos Edge AI loan drawn", "On-chain; first draw of a $98.1M facility (usd.ai)"),
     ("2026-07-02", "Open loans moved to Loan Router v2", "On-chain, LoanMigratedOut"),
     ("2026-09-23", "$122M escrow for the $128.9M facility", "On-chain; usd.ai Sep 23"),
     ("2026-10-01", "GLX launches; Duos loan repaid", "usd.ai Oct 1; Axe Compute 8-K"),

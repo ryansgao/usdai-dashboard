@@ -735,3 +735,8 @@ table.t.grid4 td.now { background: var(--primary-subtle); font-weight: 600; }
 table.peers td:first-child { min-width: 220px; }
 @media (max-width: 900px) { table.peers .sub-n { display: none; } }
 table.t th .sub-n { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+@media (max-width: 640px) {
+  table.loans .bar-cell .bar { display: none; }
+  table.loans td, table.peers td { white-space: normal; }
+  table.loans td.nowrap { white-space: nowrap; font-size: 13px; }
+}
